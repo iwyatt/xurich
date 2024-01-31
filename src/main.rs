@@ -1,15 +1,18 @@
+use std::process::Command;
+
 use bevy::prelude::*;
 use bevy_ascii_terminal::prelude::*;
 
-fn main () {
+fn main() {
     App::new()
-    .add_plugins((DefaultPlugins, TerminalPlugin))
-    .add_systems(Startup, setup)
-    .add_systems(Update, (player_walk, npc_walk))
-    .add_systems(Update, tick)
-    .run();
+        .add_plugins((DefaultPlugins, TerminalPlugin))
+        .add_systems(Startup, setup)
+        .add_systems(Update, (player_walk, npc_walk))
+        .add_systems(Update, tick)
+        .run();
 }
 
+// set up loop
 fn setup(mut commands: Commands) {
     // // Create the terminal
     // let mut terminal = Terminal::new([20,3]).with_border(Border::single_line());
@@ -22,67 +25,152 @@ fn setup(mut commands: Commands) {
     //     // Automatically set up the camera to render the terminal
     //     AutoCamera,
     // )).insert(GameTerminal);
-    let mut terminal = Terminal::new([80,60]).with_border(Border::single_line());
+    let mut terminal = Terminal::new([80, 50]).with_border(Border::single_line());
     //terminal.put_string([1, 1], "Hello world!".fg(Color::BLUE));
     let term_bundle = TerminalBundle::from(terminal);
     //commands.spawn_bundle(term_bundle, AutoCamera).insert(GameTerminal);
-    commands.spawn((term_bundle, AutoCamera)).insert(GameTerminal);
+    commands
+        .spawn((term_bundle, AutoCamera))
+        .insert(GameTerminal);
 
+    // let mut gs = State {
+    //     ecs: World::new()
+    // };
 
-    let mut gs = State {
-        ecs: World::new()
-    };
-    
-    commands.spawn(
-        (
-            Position { x: 1, y:1},
-            Renderable {glyph: '@', fg: Color::YELLOW, bg: Color::BLACK}
-        )
-    ).insert(Player);
+    commands
+        .spawn((
+            Position { x: 1, y: 1 },
+            Renderable {
+                glyph: '@',
+                fg: Color::YELLOW,
+                bg: Color::BLACK,
+            },
+        ))
+        .insert(Player);
 
     for i in 0..2 {
-        commands.spawn(
-            (
-                Position { x: i, y:2},
-                Renderable {glyph: 'G', fg: Color::RED, bg: Color::BLACK},
+        commands
+            .spawn((
+                Position { x: i, y: 2 },
+                Renderable {
+                    glyph: 'G',
+                    fg: Color::RED,
+                    bg: Color::BLACK,
+                },
                 LeftWalker,
-            )
-        ).insert(Enemy);
-    }                
+            ))
+            .insert(Enemy);
+    }
+
+    let map = Map::new();
+    commands.spawn(map);
 }
 
-fn tick(mut query_terminal: Query<&mut Terminal>, query_entities: Query<(&Position, &Renderable)>) { //may need to add `With<GameTerminal>>`
+// render update
+#[derive(Component)]
+pub struct GameTerminal;
+
+fn tick(
+    mut query_terminal: Query<&mut Terminal>,
+    query_entities: Query<(&Position, &Renderable)>,
+    query_maps: Query<&Map>,
+) {
+    //may need to add `With<GameTerminal>>`
     // https://github.com/sarkahn/bevy_roguelike/blob/2027f9966fab33e6e303a7b88b3d1e30c56683b0/src/render.rs
     // See line 44: mut q_render_terminal: Query<&mut Terminal, With<GameTerminal>>,
     let mut terminal = query_terminal.iter_mut().nth(0).unwrap();
     terminal.clear();
 
+    //render map
+    let map = query_maps.iter().nth(0).unwrap();
+    //println!("{:#?}", &map.tiles.iter().len());
+    map.tiles.iter().for_each(|tile| {
+        terminal.put_char(
+            [tile.location.x, tile.location.y],
+            tile.render.glyph.fg(tile.render.fg).bg(tile.render.bg),
+        );
+    });
+
     // for (pos, rend) in &query_entities {
     //     terminal.put_char([pos.x, pos.y], rend.glyph)
     //query_entities.iter().for_each(|position, renderable)| terminal.put_char([p.x, p.y], r.glyph.fg(r.fg).bg(r.bg)));
     //println!("{:#?}", query_entities);
-    query_entities.iter().for_each(|(pos, rend)| terminal.put_char([pos.x, pos.y], rend.glyph.fg(rend.fg).bg(rend.bg)));
+
+    //render entities
+    query_entities.iter().for_each(|(pos, rend)| {
+        terminal.put_char([pos.x, pos.y], rend.glyph.fg(rend.fg).bg(rend.bg))
+    });
     //terminal.put_string([4,1], "Updates")
 }
 
+// fn draw_map(commands: Commands, map: &Map, mut query_terminal: Query<&mut Terminal>,) {
+//     let mut y = 0;
+//     let mut x = 0;
+//     let mut terminal = query_terminal.iter_mut().nth(0).unwrap();
+
+//     map.tiles.iter().for_each(|tile|
+//         match tile.tile {
+//             TileType::Floor => {
+//                 commands.spawn( (
+//                     Position { x: x, y: y},
+//                     Renderable {glyph: '.', fg: Color::DARK_GRAY, bg: Color::BLACK}
+//                 ).insert(tile.tile) );
+//             },
+//             TileType::Wall => {
+//                 commands.spawn( (
+//                     Position { x: x, y: y},
+//                     Renderable {glyph: '#', fg: Color::GRAY, bg: Color::BLACK}
+//                 ).insert(TileType));
+//             }
+//         }
+//     )
+
+// }
+
+// player and npc moving
+#[derive(Component)]
+pub struct Player;
+
+#[derive(Component)]
+pub struct Enemy;
+
+#[derive(Component)]
+pub struct LeftWalker;
+
+#[derive(Component, PartialEq, Clone)]
+struct Position {
+    pub x: i32,
+    pub y: i32,
+}
+
+#[derive(Component, PartialEq, Clone)]
+struct Renderable {
+    pub glyph: char,
+    pub fg: Color,
+    pub bg: Color,
+}
+
 fn npc_walk(mut query_walkers: Query<(&mut Position, &Enemy)>) {
-    query_walkers.iter_mut().for_each(|(mut p,_)| {
+    query_walkers.iter_mut().for_each(|(mut p, _)| {
         p.x = p.x + 1;
         if p.x <= 1 {
             p.x = 1;
         }
-    }
-    );
+    });
 }
 
-fn player_walk(input: Res<Input<KeyCode>>, mut player_pos: Query<(&Player, &mut Position)>){
+fn player_walk(input: Res<Input<KeyCode>>, mut player_pos: Query<(&Player, &mut Position)>) {
     let move_input = read_movement(input);
     if move_input.cmpeq(IVec2::ZERO).all() {
         return;
     }
 
-    let (player, mut pos) = player_pos.iter_mut().nth(0).map(|(player, mut pos)|(player, pos)).unwrap();
-    
+    let (player, mut pos) = player_pos
+        .iter_mut()
+        .nth(0)
+        .map(|(player, mut pos)| (player, pos))
+        .unwrap();
+
     let curr = IVec2::new(pos.x, pos.y);
     let next = curr + move_input;
     pos.x = next.x;
@@ -97,24 +185,36 @@ fn read_movement(input: Res<Input<KeyCode>>) -> IVec2 {
         p.x = -1;
         p.y = -1;
     }
-    if input.just_pressed(KeyCode::Numpad2) || input.just_pressed(KeyCode::X) || input.just_pressed(KeyCode::Down) {
+    if input.just_pressed(KeyCode::Numpad2)
+        || input.just_pressed(KeyCode::X)
+        || input.just_pressed(KeyCode::Down)
+    {
         p.y = -1;
     }
     if input.just_pressed(KeyCode::Numpad3) || input.just_pressed(KeyCode::C) {
         p.x = 1;
         p.y = -1;
     }
-    if input.just_pressed(KeyCode::Numpad4) || input.just_pressed(KeyCode::A) || input.just_pressed(KeyCode::Left) {
+    if input.just_pressed(KeyCode::Numpad4)
+        || input.just_pressed(KeyCode::A)
+        || input.just_pressed(KeyCode::Left)
+    {
         p.x = -1;
     }
-    if input.just_pressed(KeyCode::Numpad6) || input.just_pressed(KeyCode::D) || input.just_pressed(KeyCode::Right) {
+    if input.just_pressed(KeyCode::Numpad6)
+        || input.just_pressed(KeyCode::D)
+        || input.just_pressed(KeyCode::Right)
+    {
         p.x = 1;
     }
     if input.just_pressed(KeyCode::Numpad7) || input.just_pressed(KeyCode::Q) {
         p.x = -1;
         p.y = 1;
     }
-    if input.just_pressed(KeyCode::Numpad8) || input.just_pressed(KeyCode::W) || input.just_pressed(KeyCode::Up) {
+    if input.just_pressed(KeyCode::Numpad8)
+        || input.just_pressed(KeyCode::W)
+        || input.just_pressed(KeyCode::Up)
+    {
         p.y = 1;
     }
     if input.just_pressed(KeyCode::Numpad9) || input.just_pressed(KeyCode::E) {
@@ -124,31 +224,129 @@ fn read_movement(input: Res<Input<KeyCode>>) -> IVec2 {
     p
 }
 
-#[derive(Component)]
-pub struct GameTerminal;
-
-#[derive(Component)]
-pub struct Player;
-
-#[derive(Component)]
-pub struct Enemy;
-
-#[derive(Component)]
-pub struct LeftWalker;
-
-#[derive(Component)]
-struct Position {
-    pub x: i32,
-    pub y: i32,
+// map building
+pub fn xy_idx(x: i32, y: i32) -> usize {
+    (y as usize * 80) + x as usize
 }
 
-#[derive(Component)]
-struct Renderable {
-    pub glyph: char,
-    pub fg: Color,
-    pub bg: Color
+#[derive(Component, PartialEq, Copy, Clone)]
+enum TileType {
+    Wall,
+    Floor,
 }
 
-struct State {
-    ecs: World
+#[derive(Component, PartialEq, Clone)]
+struct Map {
+    tiles: Vec<Tile>,
 }
+
+#[derive(Component, PartialEq, Clone)]
+struct Tile {
+    tile: TileType,
+    render: Renderable,
+    location: Position,
+}
+
+impl Map {
+    pub fn new() -> Map {
+        //let mut map = vec![TileType::Floor; 80*50];
+        // let mut map = Map { tiles: Vec::new() };
+        let mut map = Map {
+            tiles: vec![
+                Tile {
+                    tile: TileType::Floor,
+                    render: Renderable {
+                        glyph: '.',
+                        fg: Color::DARK_GRAY,
+                        bg: Color::BLACK
+                    },
+                    location: Position { x: 0, y: 0 }
+                };
+                80 * 50
+            ],
+        };
+
+        for x in 0..80 {
+            for y in 0..50 {
+                map.tiles[xy_idx(x, y)].location.x = x;
+                map.tiles[xy_idx(x, y)].location.y = y;
+            }
+        }
+
+        // Make the boundaries walls
+        for x in 0..80 {
+            //map.tiles[xy_idx(x, 0)] = TileType::Wall;
+            map.tiles[xy_idx(x, 0)] = Tile {
+                tile: TileType::Wall,
+                render: Renderable {
+                    glyph: '#',
+                    fg: Color::GRAY,
+                    bg: Color::BLACK,
+                },
+                location: Position { x: x, y: 0 },
+            };
+
+            // map.tiles[xy_idx(x, 49)] = TileType::Wall;
+
+            map.tiles[xy_idx(x, 49)] = Tile {
+                tile: TileType::Wall,
+                render: Renderable {
+                    glyph: '#',
+                    fg: Color::GRAY,
+                    bg: Color::BLACK,
+                },
+                location: Position { x: x, y: 49 },
+            };
+        }
+        for y in 0..50 {
+            //map.tiles[xy_idx(0, y)] = TileType::Wall;
+            map.tiles[xy_idx(0, y)] = Tile {
+                tile: TileType::Wall,
+                render: Renderable {
+                    glyph: '#',
+                    fg: Color::GRAY,
+                    bg: Color::BLACK,
+                },
+                location: Position { x: 0, y: y },
+            };
+
+            // map.tiles[xy_idx(79, y)] = TileType::Wall;
+            map.tiles[xy_idx(79, y)] = Tile {
+                tile: TileType::Wall,
+                render: Renderable {
+                    glyph: '#',
+                    fg: Color::GRAY,
+                    bg: Color::BLACK,
+                },
+                location: Position { x: 79, y: y },
+            };
+        }
+
+        // Now we'll randomly splat a bunch of walls. It won't be pretty, but it's a decent illustration.
+        // First, obtain the thread-local RNG:
+        let mut rng = rltk::RandomNumberGenerator::new();
+
+        for _i in 0..400 {
+            let x = rng.roll_dice(1, 79);
+            let y = rng.roll_dice(1, 49);
+            let idx = xy_idx(x, y);
+            if idx != xy_idx(40, 25) {
+                map.tiles[idx] = Tile {
+                    tile: TileType::Wall,
+                    render: Renderable {
+                        glyph: '#',
+                        fg: Color::GRAY,
+                        bg: Color::BLACK,
+                    },
+                    location: Position { x: x, y: y },
+                };
+            }
+        }
+
+        map
+    }
+}
+
+// struct State {
+//     ecs: World
+// }
