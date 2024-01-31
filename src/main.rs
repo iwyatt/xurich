@@ -15,27 +15,11 @@ fn main() {
 // set up loop
 fn setup(mut commands: Commands) {
     // // Create the terminal
-    // let mut terminal = Terminal::new([20,3]).with_border(Border::single_line());
-    // // Draw a blue "Hello world!" to the terminal
-    // terminal.put_string([1, 1], "Hello world!".fg(Color::BLUE));
-
-    // commands.spawn((
-    //     // Spawn the terminal bundle from our terminal
-    //     TerminalBundle::from(terminal),
-    //     // Automatically set up the camera to render the terminal
-    //     AutoCamera,
-    // )).insert(GameTerminal);
     let mut terminal = Terminal::new([80, 50]).with_border(Border::single_line());
-    //terminal.put_string([1, 1], "Hello world!".fg(Color::BLUE));
     let term_bundle = TerminalBundle::from(terminal);
-    //commands.spawn_bundle(term_bundle, AutoCamera).insert(GameTerminal);
     commands
         .spawn((term_bundle, AutoCamera))
         .insert(GameTerminal);
-
-    // let mut gs = State {
-    //     ecs: World::new()
-    // };
 
     commands
         .spawn((
@@ -75,7 +59,7 @@ fn tick(
     query_entities: Query<(&Position, &Renderable)>,
     query_maps: Query<&Map>,
 ) {
-    //may need to add `With<GameTerminal>>`
+    // may need to add `With<GameTerminal>>`
     // https://github.com/sarkahn/bevy_roguelike/blob/2027f9966fab33e6e303a7b88b3d1e30c56683b0/src/render.rs
     // See line 44: mut q_render_terminal: Query<&mut Terminal, With<GameTerminal>>,
     let mut terminal = query_terminal.iter_mut().nth(0).unwrap();
@@ -83,7 +67,6 @@ fn tick(
 
     //render map
     let map = query_maps.iter().nth(0).unwrap();
-    //println!("{:#?}", &map.tiles.iter().len());
     map.tiles.iter().for_each(|tile| {
         terminal.put_char(
             [tile.location.x, tile.location.y],
@@ -91,41 +74,11 @@ fn tick(
         );
     });
 
-    // for (pos, rend) in &query_entities {
-    //     terminal.put_char([pos.x, pos.y], rend.glyph)
-    //query_entities.iter().for_each(|position, renderable)| terminal.put_char([p.x, p.y], r.glyph.fg(r.fg).bg(r.bg)));
-    //println!("{:#?}", query_entities);
-
     //render entities
     query_entities.iter().for_each(|(pos, rend)| {
         terminal.put_char([pos.x, pos.y], rend.glyph.fg(rend.fg).bg(rend.bg))
     });
-    //terminal.put_string([4,1], "Updates")
 }
-
-// fn draw_map(commands: Commands, map: &Map, mut query_terminal: Query<&mut Terminal>,) {
-//     let mut y = 0;
-//     let mut x = 0;
-//     let mut terminal = query_terminal.iter_mut().nth(0).unwrap();
-
-//     map.tiles.iter().for_each(|tile|
-//         match tile.tile {
-//             TileType::Floor => {
-//                 commands.spawn( (
-//                     Position { x: x, y: y},
-//                     Renderable {glyph: '.', fg: Color::DARK_GRAY, bg: Color::BLACK}
-//                 ).insert(tile.tile) );
-//             },
-//             TileType::Wall => {
-//                 commands.spawn( (
-//                     Position { x: x, y: y},
-//                     Renderable {glyph: '#', fg: Color::GRAY, bg: Color::BLACK}
-//                 ).insert(TileType));
-//             }
-//         }
-//     )
-
-// }
 
 // player and npc moving
 #[derive(Component)]
@@ -249,8 +202,6 @@ struct Tile {
 
 impl Map {
     pub fn new() -> Map {
-        //let mut map = vec![TileType::Floor; 80*50];
-        // let mut map = Map { tiles: Vec::new() };
         let mut map = Map {
             tiles: vec![
                 Tile {
@@ -346,7 +297,3 @@ impl Map {
         map
     }
 }
-
-// struct State {
-//     ecs: World
-// }
