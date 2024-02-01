@@ -7,6 +7,7 @@ mod prelude {
     pub use crate::rect::*;
     pub use bevy::prelude::*;
     pub use bevy_ascii_terminal::prelude::*;
+    pub use rltk::*;
 }
 use prelude::*;
 
