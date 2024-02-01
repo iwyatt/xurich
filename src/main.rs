@@ -112,7 +112,12 @@ fn npc_walk(mut query_walkers: Query<(&mut Position, &Enemy)>) {
     });
 }
 
-fn player_walk(input: Res<Input<KeyCode>>, mut player_pos: Query<(&Player, &mut Position)>) {
+fn player_walk(
+    input: Res<Input<KeyCode>>,
+    mut player_pos: Query<(&Player, &mut Position)>,
+    query_map: Query<&Map>,
+) {
+    let map = query_map.iter().nth(0).unwrap();
     let move_input = read_movement(input);
     if move_input.cmpeq(IVec2::ZERO).all() {
         return;
@@ -126,6 +131,9 @@ fn player_walk(input: Res<Input<KeyCode>>, mut player_pos: Query<(&Player, &mut 
 
     let curr = IVec2::new(pos.x, pos.y);
     let next = curr + move_input;
+    if map.tiles[xy_idx(next.x, next.y)].tile == TileType::Wall {
+        return;
+    };
     pos.x = next.x;
     pos.y = next.y;
 }
