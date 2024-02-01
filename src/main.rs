@@ -1,7 +1,14 @@
-use std::process::Command;
-
-use bevy::prelude::*;
-use bevy_ascii_terminal::prelude::*;
+mod components;
+mod map;
+mod rect;
+mod prelude {
+    pub use crate::components::*;
+    pub use crate::map::*;
+    pub use crate::rect::*;
+    pub use bevy::prelude::*;
+    pub use bevy_ascii_terminal::prelude::*;
+}
+use prelude::*;
 
 fn main() {
     App::new()
@@ -23,7 +30,7 @@ fn setup(mut commands: Commands) {
 
     commands
         .spawn((
-            Position { x: 1, y: 1 },
+            Position { x: 40, y: 25 },
             Renderable {
                 glyph: '@',
                 fg: Color::YELLOW,
@@ -46,14 +53,12 @@ fn setup(mut commands: Commands) {
             .insert(Enemy);
     }
 
-    let map = Map::new();
+    //let map = Map::new();
+    let map = Map::new_map_rooms_and_corridors();
     commands.spawn(map);
 }
 
 // render update
-#[derive(Component)]
-pub struct GameTerminal;
-
 fn tick(
     mut query_terminal: Query<&mut Terminal>,
     query_entities: Query<(&Position, &Renderable)>,
@@ -78,29 +83,6 @@ fn tick(
     query_entities.iter().for_each(|(pos, rend)| {
         terminal.put_char([pos.x, pos.y], rend.glyph.fg(rend.fg).bg(rend.bg))
     });
-}
-
-// player and npc moving
-#[derive(Component)]
-pub struct Player;
-
-#[derive(Component)]
-pub struct Enemy;
-
-#[derive(Component)]
-pub struct LeftWalker;
-
-#[derive(Component, PartialEq, Clone)]
-struct Position {
-    pub x: i32,
-    pub y: i32,
-}
-
-#[derive(Component, PartialEq, Clone)]
-struct Renderable {
-    pub glyph: char,
-    pub fg: Color,
-    pub bg: Color,
 }
 
 fn npc_walk(mut query_walkers: Query<(&mut Position, &Enemy)>) {
@@ -183,125 +165,4 @@ fn read_movement(input: Res<Input<KeyCode>>) -> IVec2 {
         p.y = 1;
     }
     p
-}
-
-// map building
-pub fn xy_idx(x: i32, y: i32) -> usize {
-    (y as usize * 80) + x as usize
-}
-
-#[derive(Component, PartialEq, Copy, Clone)]
-enum TileType {
-    Wall,
-    Floor,
-}
-
-#[derive(Component, PartialEq, Clone)]
-struct Map {
-    tiles: Vec<Tile>,
-}
-
-#[derive(Component, PartialEq, Clone)]
-struct Tile {
-    tile: TileType,
-    render: Renderable,
-    location: Position,
-}
-
-impl Map {
-    pub fn new() -> Map {
-        let mut map = Map {
-            tiles: vec![
-                Tile {
-                    tile: TileType::Floor,
-                    render: Renderable {
-                        glyph: '.',
-                        fg: Color::DARK_GRAY,
-                        bg: Color::BLACK
-                    },
-                    location: Position { x: 0, y: 0 }
-                };
-                80 * 50
-            ],
-        };
-
-        for x in 0..80 {
-            for y in 0..50 {
-                map.tiles[xy_idx(x, y)].location.x = x;
-                map.tiles[xy_idx(x, y)].location.y = y;
-            }
-        }
-
-        // Make the boundaries walls
-        for x in 0..80 {
-            //map.tiles[xy_idx(x, 0)] = TileType::Wall;
-            map.tiles[xy_idx(x, 0)] = Tile {
-                tile: TileType::Wall,
-                render: Renderable {
-                    glyph: '#',
-                    fg: Color::GRAY,
-                    bg: Color::BLACK,
-                },
-                location: Position { x: x, y: 0 },
-            };
-
-            // map.tiles[xy_idx(x, 49)] = TileType::Wall;
-
-            map.tiles[xy_idx(x, 49)] = Tile {
-                tile: TileType::Wall,
-                render: Renderable {
-                    glyph: '#',
-                    fg: Color::GRAY,
-                    bg: Color::BLACK,
-                },
-                location: Position { x: x, y: 49 },
-            };
-        }
-        for y in 0..50 {
-            //map.tiles[xy_idx(0, y)] = TileType::Wall;
-            map.tiles[xy_idx(0, y)] = Tile {
-                tile: TileType::Wall,
-                render: Renderable {
-                    glyph: '#',
-                    fg: Color::GRAY,
-                    bg: Color::BLACK,
-                },
-                location: Position { x: 0, y: y },
-            };
-
-            // map.tiles[xy_idx(79, y)] = TileType::Wall;
-            map.tiles[xy_idx(79, y)] = Tile {
-                tile: TileType::Wall,
-                render: Renderable {
-                    glyph: '#',
-                    fg: Color::GRAY,
-                    bg: Color::BLACK,
-                },
-                location: Position { x: 79, y: y },
-            };
-        }
-
-        // Now we'll randomly splat a bunch of walls. It won't be pretty, but it's a decent illustration.
-        // First, obtain the thread-local RNG:
-        let mut rng = rltk::RandomNumberGenerator::new();
-
-        for _i in 0..400 {
-            let x = rng.roll_dice(1, 79);
-            let y = rng.roll_dice(1, 49);
-            let idx = xy_idx(x, y);
-            if idx != xy_idx(40, 25) {
-                map.tiles[idx] = Tile {
-                    tile: TileType::Wall,
-                    render: Renderable {
-                        glyph: '#',
-                        fg: Color::GRAY,
-                        bg: Color::BLACK,
-                    },
-                    location: Position { x: x, y: y },
-                };
-            }
-        }
-
-        map
-    }
 }
