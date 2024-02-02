@@ -124,7 +124,7 @@ impl Map {
 
 // create a map of rooms and corridors
 impl Map {
-    pub fn new_map_rooms_and_corridors() -> Map {
+    pub fn new_map_rooms_and_corridors() -> (Map, Vec<Recti>) {
         let mut map = Map {
             tiles: vec![
                 Tile {
@@ -175,7 +175,7 @@ impl Map {
                     let (prev_x, prev_y) = rooms[rooms.len() - 1].center();
                     if rng.range(0, 2) == 1 {
                         apply_horizontal_tunnel(&mut map, prev_x, new_x, prev_y);
-                        apply_vertical_tunnel(&mut map, prev_x, prev_x, new_y);
+                        apply_vertical_tunnel(&mut map, prev_y, prev_y, new_x);
                     } else {
                         apply_vertical_tunnel(&mut map, prev_y, new_y, prev_x);
                         apply_horizontal_tunnel(&mut map, prev_x, new_x, new_y);
@@ -192,7 +192,7 @@ impl Map {
         // apply_room_to_map(&room2, &mut map);
         // apply_horizontal_tunnel(&mut map, 25, 40, 23);
 
-        map
+        (map, rooms)
     }
 }
 

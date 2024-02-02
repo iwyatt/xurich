@@ -15,7 +15,7 @@ fn main() {
     App::new()
         .add_plugins((DefaultPlugins, TerminalPlugin))
         .add_systems(Startup, setup)
-        .add_systems(Update, (player_walk, npc_walk))
+        .add_systems(Update, (player_walk))
         .add_systems(Update, tick)
         .run();
 }
@@ -28,17 +28,6 @@ fn setup(mut commands: Commands) {
     commands
         .spawn((term_bundle, AutoCamera))
         .insert(GameTerminal);
-
-    commands
-        .spawn((
-            Position { x: 40, y: 25 },
-            Renderable {
-                glyph: '@',
-                fg: Color::YELLOW,
-                bg: Color::BLACK,
-            },
-        ))
-        .insert(Player);
 
     for i in 0..2 {
         commands
@@ -55,8 +44,27 @@ fn setup(mut commands: Commands) {
     }
 
     //let map = Map::new();
-    let map = Map::new_map_rooms_and_corridors();
+    let (map, rooms) = Map::new_map_rooms_and_corridors();
     commands.spawn(map);
+
+    // spawn player in center of first room on map
+    commands
+        .spawn((
+            Position {
+                x: rooms[0].center().0,
+                y: rooms[0].center().1,
+            },
+            Renderable {
+                glyph: '@',
+                fg: Color::YELLOW,
+                bg: Color::BLACK,
+            },
+        ))
+        .insert(Player)
+        .insert(Viewshed {
+            visible_tiles: Vec::new(),
+            range: 8,
+        });
 }
 
 // render update
