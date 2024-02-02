@@ -86,7 +86,25 @@ fn tick(
     let viewshed = query_player_viewshed.iter().nth(0).unwrap();
     let visible_tiles = &viewshed.visible_tiles;
     let map = query_maps.iter().nth(0).unwrap();
+
     map.tiles.iter().for_each(|tile| {
+        // render revealed tiles
+        let idx = xy_idx(tile.location.x, tile.location.y);
+        if map.revealed_tiles[idx] {
+            let tilefg = Color::Rgba {
+                red: tile.render.fg.r() / 2.0,
+                green: tile.render.fg.g() / 2.0,
+                blue: tile.render.fg.b() / 2.0,
+                alpha: 0.1,
+            };
+
+            terminal.put_char(
+                [tile.location.x, tile.location.y],
+                tile.render.glyph.fg(tilefg).bg(tile.render.bg),
+            );
+        }
+
+        // render currently visible map tiles
         if visible_tiles.contains(&Point::new(tile.location.x, tile.location.y)) {
             terminal.put_char(
                 [tile.location.x, tile.location.y],

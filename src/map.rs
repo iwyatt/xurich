@@ -17,6 +17,7 @@ pub struct Map {
     pub tiles: Vec<Tile>,
     pub height: i32,
     pub width: i32,
+    pub revealed_tiles: Vec<bool>,
 }
 
 #[derive(Component, PartialEq, Clone)]
@@ -43,6 +44,7 @@ impl Map {
                 };
                 (MAP_HEIGHT * MAP_WIDTH) as usize
             ],
+            revealed_tiles: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
         };
 
         for x in 0..MAP_WIDTH {
@@ -145,6 +147,7 @@ impl Map {
             ],
             height: MAP_HEIGHT,
             width: MAP_WIDTH,
+            revealed_tiles: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
         };
 
         // DUMB BUT WORKS: set the position of each item in the vector of map tiles to a different value
