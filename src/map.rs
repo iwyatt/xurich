@@ -3,7 +3,7 @@ use std::cmp::{max, min};
 
 // map building
 pub fn xy_idx(x: i32, y: i32) -> usize {
-    (y as usize * 80) + x as usize
+    (y as usize * MAP_WIDTH as usize) + x as usize
 }
 
 #[derive(Component, PartialEq, Copy, Clone)]
@@ -15,6 +15,8 @@ pub enum TileType {
 #[derive(Component, PartialEq, Clone)]
 pub struct Map {
     pub tiles: Vec<Tile>,
+    pub height: i32,
+    pub width: i32,
 }
 
 #[derive(Component, PartialEq, Clone)]
@@ -27,6 +29,8 @@ pub struct Tile {
 impl Map {
     pub fn new() -> Map {
         let mut map = Map {
+            height: MAP_HEIGHT,
+            width: MAP_WIDTH,
             tiles: vec![
                 Tile {
                     tile: TileType::Floor,
@@ -37,19 +41,19 @@ impl Map {
                     },
                     location: Position { x: 0, y: 0 }
                 };
-                80 * 50
+                (MAP_HEIGHT * MAP_WIDTH) as usize
             ],
         };
 
-        for x in 0..80 {
-            for y in 0..50 {
+        for x in 0..MAP_WIDTH {
+            for y in 0..MAP_HEIGHT {
                 map.tiles[xy_idx(x, y)].location.x = x;
                 map.tiles[xy_idx(x, y)].location.y = y;
             }
         }
 
         // Make the boundaries walls
-        for x in 0..80 {
+        for x in 0..MAP_WIDTH {
             //map.tiles[xy_idx(x, 0)] = TileType::Wall;
             map.tiles[xy_idx(x, 0)] = Tile {
                 tile: TileType::Wall,
@@ -102,10 +106,11 @@ impl Map {
         let mut rng = rltk::RandomNumberGenerator::new();
 
         for _i in 0..400 {
-            let x = rng.roll_dice(1, 79);
-            let y = rng.roll_dice(1, 49);
+            let x = rng.roll_dice(1, MAP_WIDTH - 1);
+            let y = rng.roll_dice(1, MAP_HEIGHT - 1);
             let idx = xy_idx(x, y);
-            if idx != xy_idx(40, 25) {
+            if idx != xy_idx(MAP_WIDTH / 2, MAP_HEIGHT / 2) {
+                //if wall position != middle of screen (player start)
                 map.tiles[idx] = Tile {
                     tile: TileType::Wall,
                     render: Renderable {
@@ -136,8 +141,10 @@ impl Map {
                     },
                     location: Position { x: 0, y: 0 }
                 };
-                80 * 50
+                (MAP_HEIGHT * MAP_WIDTH) as usize
             ],
+            height: MAP_HEIGHT,
+            width: MAP_WIDTH,
         };
 
         // DUMB BUT WORKS: set the position of each item in the vector of map tiles to a different value
@@ -237,5 +244,17 @@ fn apply_vertical_tunnel(map: &mut Map, y1: i32, y2: i32, x: i32) {
             };
             map.tiles[idx as usize].location = Position { x: x, y: y };
         }
+    }
+}
+
+impl Algorithm2D for Map {
+    fn dimensions(&self) -> Point {
+        Point::new(self.width, self.height)
+    }
+}
+
+impl BaseMap for Map {
+    fn is_opaque(&self, idx: usize) -> bool {
+        self.tiles[idx as usize].tile == TileType::Wall
     }
 }

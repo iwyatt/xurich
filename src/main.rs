@@ -8,6 +8,8 @@ mod prelude {
     pub use bevy::prelude::*;
     pub use bevy_ascii_terminal::prelude::*;
     pub use rltk::*;
+    pub const MAP_WIDTH: i32 = 80;
+    pub const MAP_HEIGHT: i32 = 50;
 }
 use prelude::*;
 
@@ -15,7 +17,7 @@ fn main() {
     App::new()
         .add_plugins((DefaultPlugins, TerminalPlugin))
         .add_systems(Startup, setup)
-        .add_systems(Update, (player_walk))
+        .add_systems(Update, (player_walk, get_visible_tiles).chain())
         .add_systems(Update, tick)
         .run();
 }
@@ -72,6 +74,7 @@ fn tick(
     mut query_terminal: Query<&mut Terminal>,
     query_entities: Query<(&Position, &Renderable)>,
     query_maps: Query<&Map>,
+    query_player_viewshed: Query<&Viewshed>,
 ) {
     // may need to add `With<GameTerminal>>`
     // https://github.com/sarkahn/bevy_roguelike/blob/2027f9966fab33e6e303a7b88b3d1e30c56683b0/src/render.rs
@@ -80,12 +83,16 @@ fn tick(
     terminal.clear();
 
     //render map
+    let viewshed = query_player_viewshed.iter().nth(0).unwrap();
+    let visible_tiles = &viewshed.visible_tiles;
     let map = query_maps.iter().nth(0).unwrap();
     map.tiles.iter().for_each(|tile| {
-        terminal.put_char(
-            [tile.location.x, tile.location.y],
-            tile.render.glyph.fg(tile.render.fg).bg(tile.render.bg),
-        );
+        if visible_tiles.contains(&Point::new(tile.location.x, tile.location.y)) {
+            terminal.put_char(
+                [tile.location.x, tile.location.y],
+                tile.render.glyph.fg(tile.render.fg).bg(tile.render.bg),
+            );
+        }
     });
 
     //render entities
@@ -107,6 +114,7 @@ fn player_walk(
     input: Res<Input<KeyCode>>,
     mut player_pos: Query<(&Player, &mut Position)>,
     query_map: Query<&Map>,
+    mut query_viewshed: Query<&mut Viewshed>,
 ) {
     let map = query_map.iter().nth(0).unwrap();
     let move_input = read_movement(input);
@@ -127,6 +135,8 @@ fn player_walk(
     };
     pos.x = next.x;
     pos.y = next.y;
+
+    let mut viewshed = query_viewshed.iter().nth(0).unwrap();
 }
 
 // an IVec2 is a 2-dimensional vector (direction and distance for x and y both)
