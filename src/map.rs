@@ -209,7 +209,7 @@ impl Map {
         // apply_horizontal_tunnel(&mut map, 25, 40, 23);
         map.rooms = rooms;
         //(map, rooms)
-        
+
         map
     }
 }

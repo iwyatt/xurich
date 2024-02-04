@@ -19,8 +19,11 @@ fn main() {
     App::new()
         .add_plugins((DefaultPlugins, TerminalPlugin))
         .add_systems(Startup, setup)
-        .add_systems(Update, (player_walk, get_visible_tiles).chain())
-        .add_systems(Update, tick)
+        .add_systems(
+            Update,
+            (player_walk, get_visible_tiles, update_viewsheds).chain(),
+        )
+        .add_systems(Update, (run_npc_ai, tick).chain())
         .run();
 }
 
@@ -85,7 +88,8 @@ fn setup(mut commands: Commands) {
                 visible_tiles: Vec::new(),
                 range: 2,
                 dirty: true,
-            });
+            })
+            .insert(NPC_AI);
     }
 }
 
