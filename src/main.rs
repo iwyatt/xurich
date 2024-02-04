@@ -29,6 +29,12 @@ fn main() {
 
 // set up loop
 fn setup(mut commands: Commands) {
+    // set the game state
+    let game_state = components::GameState {
+        runstate: RunState::Running,
+    };
+    commands.spawn(game_state);
+
     // // Create the terminal
     let mut terminal = Terminal::new([MAP_WIDTH, MAP_HEIGHT]).with_border(Border::single_line());
     let term_bundle = TerminalBundle::from(terminal);
@@ -99,7 +105,13 @@ fn tick(
     query_entities: Query<(&Position, &Renderable)>,
     query_maps: Query<&Map>,
     mut query_player_viewshed: Query<&mut Viewshed, With<Player>>,
+    mut query_game_state: Query<&mut components::GameState>,
 ) {
+    let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
+    if game_state.runstate == RunState::Paused {
+        return;
+    };
+
     // may need to add `With<GameTerminal>>`
     // https://github.com/sarkahn/bevy_roguelike/blob/2027f9966fab33e6e303a7b88b3d1e30c56683b0/src/render.rs
     // See line 44: mut q_render_terminal: Query<&mut Terminal, With<GameTerminal>>,
@@ -149,6 +161,7 @@ fn tick(
             terminal.put_char([pos.x, pos.y], rend.glyph.fg(rend.fg).bg(rend.bg))
         }
     });
+    game_state.runstate = RunState::Paused;
 }
 
 fn npc_walk(mut query_walkers: Query<(&mut Position, &Enemy)>) {
@@ -165,6 +178,7 @@ fn player_walk(
     mut player_pos: Query<(&Player, &mut Position)>,
     query_map: Query<&Map>,
     mut query_viewshed: Query<&mut Viewshed>,
+    mut query_game_state: Query<&mut components::GameState>,
 ) {
     let map = query_map.iter().nth(0).unwrap();
     let move_input = read_movement(input);
@@ -188,6 +202,8 @@ fn player_walk(
 
     let mut viewshed = query_viewshed.iter_mut().nth(0).unwrap();
     viewshed.dirty = true;
+    let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
+    game_state.runstate = RunState::Running;
 }
 
 // an IVec2 is a 2-dimensional vector (direction and distance for x and y both)
@@ -234,5 +250,6 @@ fn read_movement(input: Res<Input<KeyCode>>) -> IVec2 {
         p.x = 1;
         p.y = 1;
     }
+
     p
 }

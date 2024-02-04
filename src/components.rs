@@ -81,3 +81,15 @@ pub fn update_viewsheds(
         v.visible_tiles = visible_tiles;
     });
 }
+
+#[derive(Component)]
+pub struct GameState {
+    //pub ecs: World,
+    pub runstate: RunState,
+}
+
+#[derive(PartialEq, Copy, Clone)]
+pub enum RunState {
+    Paused,
+    Running,
+}
