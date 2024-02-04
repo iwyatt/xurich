@@ -25,18 +25,19 @@ pub struct Renderable {
     pub bg: Color,
 }
 
-#[derive(Component)]
+#[derive(Component)] // TODO : Implement viewshed so NPCs can us it
 pub struct Viewshed {
     pub visible_tiles: Vec<rltk::Point>,
     pub range: i32,
+    pub dirty: bool,
 }
 
 impl Viewshed {}
 pub fn get_visible_tiles(
-    mut query_player_pos: Query<(&Player, &Position, &mut Viewshed)>,
+    mut query_player_pos: Query<(&Position, &mut Viewshed)>,
     mut query_map: Query<&mut Map>,
 ) {
-    let (_, position, mut viewshed) = query_player_pos.iter_mut().nth(0).unwrap();
+    let (position, mut viewshed) = query_player_pos.iter_mut().nth(0).unwrap();
     let mut map = query_map.iter_mut().nth(0).unwrap();
     let mut visible_tiles =
         field_of_view(Point::new(position.x, position.y), viewshed.range, &*map);

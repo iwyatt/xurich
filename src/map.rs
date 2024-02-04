@@ -18,6 +18,7 @@ pub struct Map {
     pub height: i32,
     pub width: i32,
     pub revealed_tiles: Vec<bool>,
+    pub rooms: Vec<rltk::Rect>,
 }
 
 #[derive(Component, PartialEq, Clone)]
@@ -30,6 +31,7 @@ pub struct Tile {
 impl Map {
     pub fn new() -> Map {
         let mut map = Map {
+            rooms: Vec::new(),
             height: MAP_HEIGHT,
             width: MAP_WIDTH,
             tiles: vec![
@@ -131,8 +133,9 @@ impl Map {
 
 // create a map of rooms and corridors
 impl Map {
-    pub fn new_map_rooms_and_corridors() -> (Map, Vec<Recti>) {
+    pub fn new_map_rooms_and_corridors() -> Map {
         let mut map = Map {
+            rooms: Vec::new(),
             tiles: vec![
                 Tile {
                     tile: TileType::Wall,
@@ -150,7 +153,7 @@ impl Map {
             revealed_tiles: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
         };
 
-        // DUMB BUT WORKS: set the position of each item in the vector of map tiles to a different value
+        // REFACTOR: dumb but works - set the position of each item in the vector of map tiles to a different value
         for x in 0..80 {
             for y in 0..50 {
                 map.tiles[xy_idx(x, y)].location.x = x;
@@ -158,7 +161,7 @@ impl Map {
             }
         }
 
-        let mut rooms: Vec<Recti> = Vec::new();
+        let mut rooms: Vec<rltk::Rect> = Vec::new(); // TODO: consider adding the ROOMs vec to the Map Struct
         const MAX_ROOMS: i32 = 30;
         const MIN_SIZE: i32 = 6;
         const MAX_SIZE: i32 = 10;
@@ -168,9 +171,9 @@ impl Map {
         for _ in 0..MAX_ROOMS {
             let w = rng.range(MIN_SIZE, MAX_SIZE);
             let h = rng.range(MIN_SIZE, MAX_SIZE);
-            let x = rng.roll_dice(1, 80 - w - 1) - 1;
-            let y = rng.roll_dice(1, 50 - h - 1) - 1;
-            let new_room = Recti::new(x, y, w, h);
+            let x = rng.roll_dice(1, MAP_WIDTH - w - 1) - 1;
+            let y = rng.roll_dice(1, MAP_HEIGHT - h - 1) - 1;
+            let new_room = rltk::Rect::with_size(x, y, w, h);
             let mut ok = true;
             for other_room in rooms.iter() {
                 if new_room.intersect(other_room) {
@@ -181,8 +184,11 @@ impl Map {
                 apply_room_to_map(&new_room, &mut map);
 
                 if !rooms.is_empty() {
-                    let (new_x, new_y) = new_room.center();
-                    let (prev_x, prev_y) = rooms[rooms.len() - 1].center();
+                    let (new_x, new_y) = (new_room.center().x, new_room.center().y);
+                    let (prev_x, prev_y) = (
+                        rooms[rooms.len() - 1].center().x,
+                        rooms[rooms.len() - 1].center().y,
+                    );
                     if rng.range(0, 2) == 1 {
                         apply_horizontal_tunnel(&mut map, prev_x, new_x, prev_y);
                         apply_vertical_tunnel(&mut map, prev_y, prev_y, new_x);
@@ -201,12 +207,14 @@ impl Map {
         // apply_room_to_map(&room1, &mut map);
         // apply_room_to_map(&room2, &mut map);
         // apply_horizontal_tunnel(&mut map, 25, 40, 23);
-
-        (map, rooms)
+        map.rooms = rooms;
+        //(map, rooms)
+        
+        map
     }
 }
 
-fn apply_room_to_map(room: &Recti, map: &mut Map) {
+fn apply_room_to_map(room: &rltk::Rect, map: &mut Map) {
     for y in room.y1 + 1..=room.y2 {
         for x in room.x1 + 1..=room.x2 {
             map.tiles[xy_idx(x, y)].tile = TileType::Floor;

@@ -1,6 +1,7 @@
 mod components;
 mod map;
 mod rect;
+mod systems;
 mod prelude {
     pub use crate::components::*;
     pub use crate::map::*;
@@ -10,6 +11,7 @@ mod prelude {
     pub use rltk::*;
     pub const MAP_WIDTH: i32 = 80;
     pub const MAP_HEIGHT: i32 = 50;
+    pub use crate::systems::npc_spawner::*;
 }
 use prelude::*;
 
@@ -25,36 +27,22 @@ fn main() {
 // set up loop
 fn setup(mut commands: Commands) {
     // // Create the terminal
-    let mut terminal = Terminal::new([80, 50]).with_border(Border::single_line());
+    let mut terminal = Terminal::new([MAP_WIDTH, MAP_HEIGHT]).with_border(Border::single_line());
     let term_bundle = TerminalBundle::from(terminal);
     commands
         .spawn((term_bundle, AutoCamera))
         .insert(GameTerminal);
 
-    for i in 0..2 {
-        commands
-            .spawn((
-                Position { x: i, y: 2 },
-                Renderable {
-                    glyph: 'G',
-                    fg: Color::RED,
-                    bg: Color::BLACK,
-                },
-                LeftWalker,
-            ))
-            .insert(Enemy);
-    }
-
     //let map = Map::new();
-    let (map, rooms) = Map::new_map_rooms_and_corridors();
-    commands.spawn(map);
+    let map = Map::new_map_rooms_and_corridors();
+    commands.spawn(map.clone());
 
     // spawn player in center of first room on map
     commands
         .spawn((
             Position {
-                x: rooms[0].center().0,
-                y: rooms[0].center().1,
+                x: map.rooms[0].center().x,
+                y: map.rooms[0].center().y,
             },
             Renderable {
                 glyph: '@',
@@ -65,8 +53,40 @@ fn setup(mut commands: Commands) {
         .insert(Player)
         .insert(Viewshed {
             visible_tiles: Vec::new(),
-            range: 8,
+            range: 3,
+            dirty: true,
         });
+
+    // spawn npcs
+    for i in 1..map.rooms.len() {
+        let mut rng = rltk::RandomNumberGenerator::new();
+        let roll = rng.roll_dice(1, 2);
+        let glyph = match roll {
+            1 => 'G',
+            2 => 'O',
+            _ => 'X',
+        };
+
+        commands
+            .spawn((
+                Position {
+                    x: map.rooms[i].center().x,
+                    y: map.rooms[i].center().y,
+                },
+                Renderable {
+                    glyph: glyph,
+                    fg: Color::RED,
+                    bg: Color::BLACK,
+                },
+                LeftWalker,
+            ))
+            .insert(Enemy)
+            .insert(Viewshed {
+                visible_tiles: Vec::new(),
+                range: 2,
+                dirty: true,
+            });
+    }
 }
 
 // render update
@@ -74,16 +94,21 @@ fn tick(
     mut query_terminal: Query<&mut Terminal>,
     query_entities: Query<(&Position, &Renderable)>,
     query_maps: Query<&Map>,
-    query_player_viewshed: Query<&Viewshed>,
+    mut query_player_viewshed: Query<&mut Viewshed, With<Player>>,
 ) {
     // may need to add `With<GameTerminal>>`
     // https://github.com/sarkahn/bevy_roguelike/blob/2027f9966fab33e6e303a7b88b3d1e30c56683b0/src/render.rs
     // See line 44: mut q_render_terminal: Query<&mut Terminal, With<GameTerminal>>,
     let mut terminal = query_terminal.iter_mut().nth(0).unwrap();
-    terminal.clear();
 
     //render map
-    let viewshed = query_player_viewshed.iter().nth(0).unwrap();
+    let mut viewshed = query_player_viewshed.iter_mut().nth(0).unwrap();
+    if !viewshed.dirty {
+        return;
+    } else {
+        terminal.clear();
+        viewshed.dirty = false;
+    };
     let visible_tiles = &viewshed.visible_tiles;
     let map = query_maps.iter().nth(0).unwrap();
 
@@ -105,6 +130,7 @@ fn tick(
         }
 
         // render currently visible map tiles
+        // TODO: change this so that it only re-renders this when the players moves
         if visible_tiles.contains(&Point::new(tile.location.x, tile.location.y)) {
             terminal.put_char(
                 [tile.location.x, tile.location.y],
@@ -113,9 +139,11 @@ fn tick(
         }
     });
 
-    //render entities
+    //render npcs
     query_entities.iter().for_each(|(pos, rend)| {
-        terminal.put_char([pos.x, pos.y], rend.glyph.fg(rend.fg).bg(rend.bg))
+        if visible_tiles.contains(&Point::new(pos.x, pos.y)) {
+            terminal.put_char([pos.x, pos.y], rend.glyph.fg(rend.fg).bg(rend.bg))
+        }
     });
 }
 
@@ -154,7 +182,8 @@ fn player_walk(
     pos.x = next.x;
     pos.y = next.y;
 
-    let mut viewshed = query_viewshed.iter().nth(0).unwrap();
+    let mut viewshed = query_viewshed.iter_mut().nth(0).unwrap();
+    viewshed.dirty = true;
 }
 
 // an IVec2 is a 2-dimensional vector (direction and distance for x and y both)
