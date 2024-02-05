@@ -60,6 +60,9 @@ fn setup(mut commands: Commands) {
             },
         ))
         .insert(Player)
+        .insert(components::Name {
+            name: String::from("Player"),
+        })
         .insert(Viewshed {
             visible_tiles: Vec::new(),
             range: 3,
@@ -70,10 +73,10 @@ fn setup(mut commands: Commands) {
     for i in 1..map.rooms.len() {
         let mut rng = rltk::RandomNumberGenerator::new();
         let roll = rng.roll_dice(1, 2);
-        let glyph = match roll {
-            1 => 'G',
-            2 => 'O',
-            _ => 'X',
+        let (glyph, name) = match roll {
+            1 => ('G', "Goblin".to_string()),
+            2 => ('O', "Orc".to_string()),
+            _ => ('X', "Xenity".to_string()),
         };
 
         commands
@@ -87,6 +90,7 @@ fn setup(mut commands: Commands) {
                     fg: Color::RED,
                     bg: Color::BLACK,
                 },
+                components::Name { name: name },
                 LeftWalker,
             ))
             .insert(Enemy)

@@ -25,7 +25,14 @@ pub fn run_npc_ai(
             .visible_tiles
             .contains(&Point::new(player_position.x, player_position.y))
         {
-            terminal.put_string([e.0.x, e.0.y], "Hello, World!".fg(Color::BLUE))
+            // TODO: smart positioning of text re: 1) relative to npc and 2) relative to border of game window
+            let npc_text = "Hello, World!".to_string();
+            let npc_text_pos_x = e.0.x - (npc_text.len() / 2) as i32;
+            let npc_text_pos_y = e.0.y + 1;
+            terminal.put_string(
+                [npc_text_pos_x, npc_text_pos_y + 1],
+                npc_text.fg(Color::BLUE)
+            )
         }
     });
 }
@@ -92,4 +99,9 @@ pub struct GameState {
 pub enum RunState {
     Paused,
     Running,
+}
+
+#[derive(Component, Debug)]
+pub struct Name {
+    pub name: String,
 }
