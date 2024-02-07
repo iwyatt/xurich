@@ -294,27 +294,27 @@ impl BaseMap for Map {
         if self.is_exit_valid(x, y + 1) {
             exits.push((xy_idx(x, y + 1), 1.0))
         }; // up
-           // if self.is_exit_valid(x + 1, y + 1) {
-           //     exits.push((xy_idx(x + 1, y + 1), 1.0))
-           // }; // up-right
+        if self.is_exit_valid(x + 1, y + 1) {
+            exits.push((xy_idx(x + 1, y + 1), 1.0))
+        }; // up-right
         if self.is_exit_valid(x + 1, y) {
             exits.push((xy_idx(x + 1, y), 1.0))
         }; // right
-           // if self.is_exit_valid(x + 1, y - 1) {
-           //     exits.push((xy_idx(x + 1, y - 1), 1.0))
-           // }; // down-right
+        if self.is_exit_valid(x + 1, y - 1) {
+            exits.push((xy_idx(x + 1, y - 1), 1.0))
+        }; // down-right
         if self.is_exit_valid(x, y - 1) {
             exits.push((xy_idx(x, y - 1), 1.0))
         }; // down
-           // if self.is_exit_valid(x - 1, y - 1) {
-           //     exits.push((xy_idx(x - 1, y - 1), 1.0))
-           // }; // down-left
+        if self.is_exit_valid(x - 1, y - 1) {
+            exits.push((xy_idx(x - 1, y - 1), 1.0))
+        }; // down-left
         if self.is_exit_valid(x - 1, y) {
             exits.push((xy_idx(x - 1, y) - 1, 1.0))
         }; // left
-           // if self.is_exit_valid(x - 1, y + 1) {
-           //     exits.push((xy_idx(x - 1, y + 1), 1.0))
-           // }; // up-left
+        if self.is_exit_valid(x - 1, y + 1) {
+            exits.push((xy_idx(x - 1, y + 1), 1.0))
+        }; // up-left
 
         exits
     }

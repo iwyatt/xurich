@@ -7,15 +7,15 @@ pub fn run_npc_ai(
         Query<(&mut Position, &mut Viewshed, &mut NPC_AI), With<Enemy>>,
         Query<&mut Position, With<Player>>,
     )>,
-    query_game_state: Query<&components::GameState>,
+    mut query_game_state: Query<&mut components::GameState>,
     mut query_terminal: Query<&mut Terminal>,
     mut query_map: Query<&mut Map>,
 ) {
-    let game_state = query_game_state.iter().nth(0).unwrap();
-    println!("game_state.runstate: {:#?}", game_state.runstate);
+    let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
     if game_state.runstate == components::RunState::Paused {
-        //return;
+        return;
     };
+    game_state.runstate = RunState::Paused;
 
     // let query_terminal = &paramset.p2();
     let mut terminal = query_terminal.iter_mut().nth(0).unwrap();
@@ -57,10 +57,9 @@ pub fn run_npc_ai(
                 return;
             }
             NPC_State::Active => {
-                if (pos.x as f32 - player_position.x as f32 + pos.y as f32
-                    - player_position.y as f32)
-                    .abs()
-                    <= 1.0
+                if (pos.x as f32 - player_position.x as f32).abs()
+                    + (pos.y as f32 - player_position.y as f32).abs()
+                    <= 1.5
                 {
                     let npc_text = "Attack!".to_string();
                     let npc_text_pos_x = pos.x - (npc_text.len() / 2) as i32;
@@ -89,8 +88,11 @@ pub fn run_npc_ai(
                         path.steps.len()
                     );
                     if path.success && path.steps.len() > 1 {
+                        println!("path.steps[1]: {:#?}", path.steps[1]);
+                        println!("before: pos.x: {:#?}, pos.y: {:#?}", pos.x, pos.y);
                         pos.x = path.steps[1] as i32 % map.width;
                         pos.y = path.steps[1] as i32 / map.width;
+                        println!("after: pos.x: {:#?}, pos.y: {:#?}", pos.x, pos.y);
                         view.dirty = true;
                     }
                 }

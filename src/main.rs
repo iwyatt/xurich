@@ -28,9 +28,18 @@ fn main() {
         .add_systems(Startup, setup)
         .add_systems(
             Update,
-            (player_walk, get_visible_tiles, update_viewsheds).chain(),
+            (
+                player_walk,
+                get_visible_tiles,
+                update_viewsheds,
+                run_npc_ai,
+                get_visible_tiles,
+                update_viewsheds,
+                //tick,
+            )
+                .chain(),
         )
-        .add_systems(Update, run_npc_ai)
+        //.add_systems(Update, run_npc_ai)
         .add_systems(Update, tick)
         .run();
 }
@@ -143,6 +152,7 @@ fn tick(
         terminal.clear();
         viewshed.dirty = false;
     };
+
     let visible_tiles = &viewshed.visible_tiles;
     let map = query_maps.iter().nth(0).unwrap();
 
@@ -179,7 +189,7 @@ fn tick(
             terminal.put_char([pos.x, pos.y], rend.glyph.fg(rend.fg).bg(rend.bg))
         }
     });
-    game_state.runstate = RunState::Paused;
+    //game_state.runstate = RunState::Paused;
 }
 
 fn npc_walk(mut query_walkers: Query<(&mut Position, &Enemy)>) {
