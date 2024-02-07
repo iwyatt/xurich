@@ -9,38 +9,23 @@ pub struct Player;
 #[derive(Component, Debug)]
 pub struct Enemy;
 
-#[derive(Component, Debug)]
-pub struct NPC_AI;
+#[derive(Component)]
+pub struct NPC_AI {
+    pub state: NPC_State,
+}
 
-// impl NPC_AI {}
-pub fn run_npc_ai(
-    query_enemy: Query<(&Position, &Viewshed, With<Enemy>)>,
-    query_player: Query<&Position, With<Player>>,
-    mut query_terminal: Query<&mut Terminal>,
-) {
-    let mut terminal = query_terminal.iter_mut().nth(0).unwrap();
-    let player_position = query_player.iter().nth(0).unwrap();
-    query_enemy.iter().for_each(|e| {
-        if e.1
-            .visible_tiles
-            .contains(&Point::new(player_position.x, player_position.y))
-        {
-            // TODO: smart positioning of text re: 1) relative to npc and 2) relative to border of game window
-            let npc_text = "Hello, World!".to_string();
-            let npc_text_pos_x = e.0.x - (npc_text.len() / 2) as i32;
-            let npc_text_pos_y = e.0.y + 1;
-            terminal.put_string(
-                [npc_text_pos_x, npc_text_pos_y + 1],
-                npc_text.fg(Color::BLUE)
-            )
-        }
-    });
+#[derive(PartialEq, Copy, Clone, Debug)]
+pub enum NPC_State {
+    Inactive, // dont execute AI
+    Alerted,
+    Active,
+    Passive, // idle
 }
 
 #[derive(Component)]
 pub struct LeftWalker;
 
-#[derive(Component, PartialEq, Clone)]
+#[derive(Component, PartialEq, Clone, Debug)]
 pub struct Position {
     pub x: i32,
     pub y: i32,
@@ -60,42 +45,13 @@ pub struct Viewshed {
     pub dirty: bool,
 }
 
-//impl Viewshed {}
-pub fn get_visible_tiles(
-    mut query_player_pos: Query<(&Position, &mut Viewshed), With<Player>>,
-    mut query_map: Query<&mut Map>,
-) {
-    let (position, mut viewshed) = query_player_pos.iter_mut().nth(0).unwrap();
-    let mut map = query_map.iter_mut().nth(0).unwrap();
-    let mut visible_tiles =
-        field_of_view(Point::new(position.x, position.y), viewshed.range, &*map);
-    visible_tiles.retain(|p| p.x >= 0 && p.x < map.width && p.y >= 0 && p.y < map.height);
-    viewshed.visible_tiles = visible_tiles;
-    viewshed
-        .visible_tiles
-        .iter()
-        .for_each(|position| map.revealed_tiles[xy_idx(position.x, position.y)] = true);
-}
-
-pub fn update_viewsheds(
-    mut query_viewsheds: Query<(&Position, &mut Viewshed)>,
-    mut query_map: Query<&mut Map>,
-) {
-    let mut map = query_map.iter_mut().nth(0).unwrap();
-    query_viewsheds.iter_mut().for_each(|(p, mut v)| {
-        let mut visible_tiles = field_of_view(Point::new(p.x, p.y), v.range, &*map);
-        visible_tiles.retain(|p| p.x >= 0 && p.x < map.width && p.y >= 0 && p.y < map.height);
-        v.visible_tiles = visible_tiles;
-    });
-}
-
-#[derive(Component)]
+#[derive(Component, Copy, Clone, Debug)]
 pub struct GameState {
     //pub ecs: World,
     pub runstate: RunState,
 }
 
-#[derive(PartialEq, Copy, Clone)]
+#[derive(PartialEq, Copy, Clone, Debug)]
 pub enum RunState {
     Paused,
     Running,
