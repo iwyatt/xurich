@@ -32,15 +32,15 @@ pub fn run_npc_ai(
     // process ai for each enemy with a position, viewshed, and NPC_AI
     paramset.p0().iter_mut().for_each(|enemy| {
         let (mut pos, mut view, mut ai) = enemy;
-        //println!("{:#?}", ai.state);
+        println!("{:#?}", ai.state);
         match ai.state {
-            NPC_State::Inactive => {
+            NPC_AI_State::Inactive => {
                 if view
                     .visible_tiles
                     .contains(&Point::new(player_position.x, player_position.y))
                 {
                     println!("Player within Monster Visibility");
-                    ai.state = NPC_State::Active;
+                    ai.state = NPC_AI_State::Active;
 
                     // TODO: Move NPC emotes to UI logic
                     let npc_text = "Hello, World!".to_string();
@@ -56,7 +56,7 @@ pub fn run_npc_ai(
                 }
                 return;
             }
-            NPC_State::Active => {
+            NPC_AI_State::Active => {
                 // get distance to player in order to inform what action monster takes
                 let distance_to_player = rltk::DistanceAlg::Pythagoras.distance2d(
                     Point::new(player_position.x, player_position.y),

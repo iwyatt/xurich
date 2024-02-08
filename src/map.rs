@@ -370,3 +370,25 @@ impl MapIndexingSystem {
         });
     }
 }
+
+// fn spawn_monsters(map: Map) {
+//     // spawn npcs
+//     for i in 1..map.rooms.len() {
+//         let mut rng = rltk::RandomNumberGenerator::new();
+//         let roll = rng.roll_dice(1, 2);
+//         let (glyph, name) = match roll {
+//             1 => ('G', "Goblin".to_string()),
+//             2 => ('O', "Orc".to_string()),
+//             _ => ('X', "Xenity".to_string()),
+//         };
+
+//         // spawn player in center of first room on map
+//         Commands::spawn(NPCBundle {
+//             position: Position {
+//                 x: map.rooms[0].center().x,
+//                 y: map.rooms[0].center().y,
+//             },
+//             ..Default::default()
+//             });
+//     }
+// }

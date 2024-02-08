@@ -6,24 +6,47 @@ pub struct GameTerminal;
 #[derive(Component)]
 pub struct Player;
 
-#[derive(Component, Debug)]
-pub struct Enemy;
-
-#[derive(Component)]
-pub struct NPC_AI {
-    pub state: NPC_State,
+#[derive(Bundle)]
+pub struct PlayerBundle {
+    pub name: Name,
+    pub marker: Player,
+    pub viewshed: Viewshed,
+    pub position: Position,
+    pub renderable: Renderable,
+    pub stats: CombatStats,
+    // We can nest/include another bundle.
+    // Add the components for a standard Bevy Sprite:
+    // sprite: SpriteSheetBundle,
 }
 
-#[derive(PartialEq, Copy, Clone, Debug)]
-pub enum NPC_State {
-    Inactive, // dont execute AI
-    Alerted,
-    Active,
-    Passive, // idle
+impl Default for PlayerBundle {
+    fn default() -> Self {
+        Self {
+            name: Name("Hero".into()),
+            marker: Player,
+            viewshed: Viewshed {
+                visible_tiles: Vec::new(),
+                range: 3,
+                dirty: true,
+            },
+            position: Position {
+                x: MAP_WIDTH / 2,
+                y: MAP_HEIGHT / 2,
+            },
+            renderable: Renderable {
+                glyph: '@',
+                fg: Color::LIME_GREEN,
+                bg: Color::BLACK,
+            },
+            stats: CombatStats {
+                max_hp: 30,
+                hp: 30,
+                defense: 2,
+                power: 5,
+            },
+        }
+    }
 }
-
-#[derive(Component)]
-pub struct LeftWalker;
 
 #[derive(Component, PartialEq, Clone, Debug)]
 pub struct Position {
@@ -58,9 +81,7 @@ pub enum RunState {
 }
 
 #[derive(Component, Debug)]
-pub struct Name {
-    pub name: String,
-}
+pub struct Name(pub String);
 
 #[derive(Component, Debug)]
 pub struct BlocksTile;
