@@ -13,7 +13,6 @@ mod prelude {
     pub use rltk::*;
     pub const MAP_WIDTH: i32 = 80;
     pub const MAP_HEIGHT: i32 = 50;
-    pub use crate::components::GameState;
     pub use crate::systems::entity_viewsheds;
     pub use crate::systems::npc_spawner::*;
 }
@@ -29,18 +28,22 @@ fn main() {
         .add_systems(
             Update,
             (
+                MapIndexingSystem::run,
                 player_walk,
                 get_visible_tiles,
                 update_viewsheds,
                 run_npc_ai,
                 get_visible_tiles,
                 update_viewsheds,
-                //tick,
+                tick,
             )
                 .chain(),
         )
         //.add_systems(Update, run_npc_ai)
-        .add_systems(Update, tick)
+        // .add_systems(Update, MapIndexingSystem::run)
+        // .add_systems(Update, update_viewsheds)
+        // .add_systems(Update, get_visible_tiles)
+        //.add_systems(Update, tick)
         .run();
 }
 
@@ -76,9 +79,16 @@ fn setup(mut commands: Commands) {
                 bg: Color::BLACK,
             },
         ))
+        //.insert(BlocksTile)
         .insert(Player)
         .insert(components::Name {
             name: String::from("Player"),
+        })
+        .insert(CombatStats {
+            max_hp: 30,
+            hp: 30,
+            defense: 2,
+            power: 5,
         })
         .insert(Viewshed {
             visible_tiles: Vec::new(),
@@ -113,6 +123,7 @@ fn setup(mut commands: Commands) {
                     state: NPC_State::Inactive,
                 },
             ))
+            .insert(BlocksTile)
             .insert(Enemy)
             .insert(
                 Viewshed {
@@ -146,16 +157,19 @@ fn tick(
 
     //render map
     let mut viewshed = query_player_viewshed.iter_mut().nth(0).unwrap();
-    if !viewshed.dirty {
-        return;
-    } else {
-        terminal.clear();
-        viewshed.dirty = false;
-    };
+    // if !viewshed.dirty {
+    //     return;
+    // } else {
+    //     terminal.clear();
+    //     viewshed.dirty = false;
+    // };
 
+    viewshed.dirty = false;
     let visible_tiles = &viewshed.visible_tiles;
+
     let map = query_maps.iter().nth(0).unwrap();
 
+    terminal.clear();
     map.tiles.iter().for_each(|tile| {
         // render revealed tiles
         let idx = xy_idx(tile.location.x, tile.location.y);
@@ -222,9 +236,16 @@ fn player_walk(
 
     let curr = IVec2::new(pos.x, pos.y);
     let next = curr + move_input;
-    if map.tiles[xy_idx(next.x, next.y)].tile == TileType::Wall {
+
+    // check if player can validly move to desired spot
+    if map.blocked_tiles[xy_idx(next.x, next.y)] {
         return;
     };
+    // if map.tiles[xy_idx(next.x, next.y)].tile == TileType::Wall {
+    //     return;
+    // };
+
+    // if so, then update player position
     pos.x = next.x;
     pos.y = next.y;
 

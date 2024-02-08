@@ -1,11 +1,6 @@
 pub use crate::prelude::*;
 use std::cmp::{max, min};
 
-// map building
-pub fn xy_idx(x: i32, y: i32) -> usize {
-    (y as usize * MAP_WIDTH as usize) + x as usize
-}
-
 #[derive(Component, PartialEq, Clone)]
 pub struct Map {
     pub tiles: Vec<Tile>,
@@ -13,6 +8,7 @@ pub struct Map {
     pub width: i32,
     pub revealed_tiles: Vec<bool>,
     pub rooms: Vec<rltk::Rect>,
+    pub blocked_tiles: Vec<bool>,
 }
 
 #[derive(Component, PartialEq, Clone)]
@@ -20,6 +16,7 @@ pub struct Tile {
     pub tile: TileType,
     pub render: Renderable,
     pub location: Position,
+    //pub contents: Option<Entity>
 }
 
 #[derive(Component, PartialEq, Copy, Clone)]
@@ -32,6 +29,7 @@ impl Map {
     pub fn new() -> Map {
         let mut map = Map {
             rooms: Vec::new(),
+            blocked_tiles: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
             height: MAP_HEIGHT,
             width: MAP_WIDTH,
             tiles: vec![
@@ -133,17 +131,25 @@ impl Map {
 
 // create a map of rooms and corridors
 impl Map {
+    pub fn populate_blocked_tiles(&mut self) {
+        for (i, tile) in self.tiles.iter_mut().enumerate() {
+            self.blocked_tiles[i] = (tile.tile == TileType::Wall);
+        }
+    }
+
     fn is_exit_valid(&self, x: i32, y: i32) -> bool {
         if x < 1 || x > self.width - 1 || y < 1 || y > self.height - 1 {
             return false;
         }
         let idx = xy_idx(x, y);
-        self.tiles[idx as usize].tile != TileType::Wall
+        !self.blocked_tiles[idx]
+        //self.tiles[idx as usize].tile != TileType::Wall
     }
 
     pub fn new_map_rooms_and_corridors() -> Map {
         let mut map = Map {
             rooms: Vec::new(),
+            blocked_tiles: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
             tiles: vec![
                 Tile {
                     tile: TileType::Wall,
@@ -162,14 +168,14 @@ impl Map {
         };
 
         // REFACTOR: dumb but works - set the position of each item in the vector of map tiles to a different value
-        for x in 0..80 {
-            for y in 0..50 {
+        for x in 0..MAP_WIDTH {
+            for y in 0..MAP_HEIGHT {
                 map.tiles[xy_idx(x, y)].location.x = x;
                 map.tiles[xy_idx(x, y)].location.y = y;
             }
         }
 
-        let mut rooms: Vec<rltk::Rect> = Vec::new(); // TODO: consider adding the ROOMs vec to the Map Struct
+        let mut rooms: Vec<rltk::Rect> = Vec::new();
         const MAX_ROOMS: i32 = 30;
         const MIN_SIZE: i32 = 6;
         const MAX_SIZE: i32 = 10;
@@ -181,6 +187,8 @@ impl Map {
             let h = rng.range(MIN_SIZE, MAX_SIZE);
             let x = rng.roll_dice(1, MAP_WIDTH - w - 1) - 1;
             let y = rng.roll_dice(1, MAP_HEIGHT - h - 1) - 1;
+            // let x = rng.roll_dice(1, MAP_WIDTH - w);
+            // let y = rng.roll_dice(1, MAP_HEIGHT - h);
             let new_room = rltk::Rect::with_size(x, y, w, h);
             let mut ok = true;
             for other_room in rooms.iter() {
@@ -199,7 +207,7 @@ impl Map {
                     );
                     if rng.range(0, 2) == 1 {
                         apply_horizontal_tunnel(&mut map, prev_x, new_x, prev_y);
-                        apply_vertical_tunnel(&mut map, prev_y, prev_y, new_x);
+                        apply_vertical_tunnel(&mut map, prev_y, new_y, new_x);
                     } else {
                         apply_vertical_tunnel(&mut map, prev_y, new_y, prev_x);
                         apply_horizontal_tunnel(&mut map, prev_x, new_x, new_y);
@@ -208,6 +216,8 @@ impl Map {
                 rooms.push(new_room);
             }
         }
+        //     rooms.push(new_room);
+        // }
 
         // let room1 = Recti::new(20, 15, 10, 15);
         // let room2 = Recti::new(35, 15, 10, 15);
@@ -239,7 +249,7 @@ fn apply_room_to_map(room: &rltk::Rect, map: &mut Map) {
 fn apply_horizontal_tunnel(map: &mut Map, x1: i32, x2: i32, y: i32) {
     for x in min(x1, x2)..=max(x1, x2) {
         let idx = xy_idx(x, y);
-        if idx > 0 && idx < 80 * 50 {
+        if idx > 0 && idx < (MAP_WIDTH as usize * MAP_HEIGHT as usize) as usize {
             map.tiles[idx as usize].tile = TileType::Floor;
             map.tiles[idx as usize].render = Renderable {
                 glyph: '.',
@@ -254,7 +264,7 @@ fn apply_horizontal_tunnel(map: &mut Map, x1: i32, x2: i32, y: i32) {
 fn apply_vertical_tunnel(map: &mut Map, y1: i32, y2: i32, x: i32) {
     for y in min(y1, y2)..=max(y1, y2) {
         let idx = xy_idx(x, y);
-        if idx > 0 && idx < 80 * 50 {
+        if idx > 0 && idx < (MAP_WIDTH as usize * MAP_HEIGHT as usize) as usize {
             map.tiles[idx as usize].tile = TileType::Floor;
             map.tiles[idx as usize].render = Renderable {
                 glyph: '.',
@@ -320,11 +330,36 @@ impl BaseMap for Map {
     }
 }
 
+// map building
+pub fn xy_idx(x: i32, y: i32) -> usize {
+    (y as usize * MAP_WIDTH as usize) + x as usize
+}
+
 pub fn idx_xy(idx: usize) -> (i32, i32) {
     // y * MAP_WIDTH + x = idx
     // y = y / MAP_WIDTH - x
     let y = idx as i32 / MAP_WIDTH;
     let x = idx as i32 - (MAP_WIDTH * y);
-    println!("idx: {:#?}; x: {:#?}; y: {:#?}", idx, x, y);
     (x, y)
+}
+
+pub struct MapIndexingSystem {}
+
+impl MapIndexingSystem {
+    pub fn run(
+        mut query_map: Query<&mut Map>,
+        query_blocked_positions: Query<&Position, With<BlocksTile>>,
+    ) {
+        let mut map = query_map.iter_mut().nth(0).unwrap();
+        map.populate_blocked_tiles();
+
+        // let positions = query_position.iter().map(|mut p| p = &Position{x: p.x, y: p.y}).collect();
+        // let blocks = query_position.iter().map(|p| p = &Position{x: p.x, y: p.y});
+
+        query_blocked_positions.iter().for_each(|pos| {
+            //println!("blocked_pos: {:#?}", pos);
+            let idx = xy_idx(pos.x, pos.y);
+            map.blocked_tiles[idx] = true;
+        });
+    }
 }
