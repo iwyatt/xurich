@@ -1,20 +1,20 @@
+// TODO: This use / mod loading needs to be reviewed and cleaned up
 mod components;
 mod map;
 mod rect;
 mod systems;
-
-// TODO: This use / mod loading needs to be reviewed and cleaned up
 mod prelude {
+    // game play area max width and height
+    pub const MAP_WIDTH: i32 = 80;
+    pub const MAP_HEIGHT: i32 = 50;
     pub use crate::components::*;
     pub use crate::map::*;
+    pub use crate::systems::entity_viewsheds;
+    pub use crate::systems::npc_spawner::*;
     pub use crate::systems::*;
     pub use bevy::prelude::*;
     pub use bevy_ascii_terminal::prelude::*;
     pub use rltk::*;
-    pub const MAP_WIDTH: i32 = 80;
-    pub const MAP_HEIGHT: i32 = 50;
-    pub use crate::systems::entity_viewsheds;
-    pub use crate::systems::npc_spawner::*;
 }
 use crate::entity_viewsheds::get_visible_tiles;
 use crate::entity_viewsheds::update_viewsheds;
@@ -39,10 +39,6 @@ fn main() {
             )
                 .chain(),
         )
-        //.add_systems(Update, run_npc_ai)
-        // .add_systems(Update, MapIndexingSystem::run)
-        // .add_systems(Update, update_viewsheds)
-        // .add_systems(Update, get_visible_tiles)
         //.add_systems(Update, tick)
         .run();
 }
@@ -125,15 +121,11 @@ fn setup(mut commands: Commands) {
             ))
             .insert(BlocksTile)
             .insert(Enemy)
-            .insert(
-                Viewshed {
-                    visible_tiles: Vec::new(),
-                    range: 4,
-                    dirty: true,
-                }, // .insert(NPC_AI {
-                   //     state: NPC_State::Inactive,
-                   // }
-            );
+            .insert(Viewshed {
+                visible_tiles: Vec::new(),
+                range: 4,
+                dirty: true,
+            });
     }
 }
 
@@ -143,20 +135,14 @@ fn tick(
     query_entities: Query<(&Position, &Renderable)>,
     query_maps: Query<&Map>,
     mut query_player_viewshed: Query<&mut Viewshed, With<Player>>,
-    mut query_game_state: Query<&mut components::GameState>,
+    // mut query_game_state: Query<&mut components::GameState>,
 ) {
-    let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
-    // if game_state.runstate == RunState::Paused {
-    //     return;
-    // };
-
-    // may need to add `With<GameTerminal>>`
-    // https://github.com/sarkahn/bevy_roguelike/blob/2027f9966fab33e6e303a7b88b3d1e30c56683b0/src/render.rs
-    // See line 44: mut q_render_terminal: Query<&mut Terminal, With<GameTerminal>>,
+    let map = query_maps.iter().nth(0).unwrap();
+    // let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
     let mut terminal = query_terminal.iter_mut().nth(0).unwrap();
-
-    //render map
     let mut viewshed = query_player_viewshed.iter_mut().nth(0).unwrap();
+
+    // stop rendering if the player's view shed isn't dirty.
     // if !viewshed.dirty {
     //     return;
     // } else {
@@ -164,12 +150,13 @@ fn tick(
     //     viewshed.dirty = false;
     // };
 
+    // declare the viewshed clean - then update it.
     viewshed.dirty = false;
     let visible_tiles = &viewshed.visible_tiles;
 
-    let map = query_maps.iter().nth(0).unwrap();
-
+    // clear the terminal screen
     terminal.clear();
+
     map.tiles.iter().for_each(|tile| {
         // render revealed tiles
         let idx = xy_idx(tile.location.x, tile.location.y);
@@ -188,7 +175,7 @@ fn tick(
         }
 
         // render currently visible map tiles
-        // TODO: change this so that it only re-renders this when the players moves
+        // TODO: change this so that it only re-renders this when something changes (player moves, monster moves, etc)
         if visible_tiles.contains(&Point::new(tile.location.x, tile.location.y)) {
             terminal.put_char(
                 [tile.location.x, tile.location.y],
@@ -201,16 +188,6 @@ fn tick(
     query_entities.iter().for_each(|(pos, rend)| {
         if visible_tiles.contains(&Point::new(pos.x, pos.y)) {
             terminal.put_char([pos.x, pos.y], rend.glyph.fg(rend.fg).bg(rend.bg))
-        }
-    });
-    //game_state.runstate = RunState::Paused;
-}
-
-fn npc_walk(mut query_walkers: Query<(&mut Position, &Enemy)>) {
-    query_walkers.iter_mut().for_each(|(mut p, _)| {
-        p.x = p.x + 1;
-        if p.x <= 1 {
-            p.x = 1;
         }
     });
 }
@@ -241,9 +218,6 @@ fn player_walk(
     if map.blocked_tiles[xy_idx(next.x, next.y)] {
         return;
     };
-    // if map.tiles[xy_idx(next.x, next.y)].tile == TileType::Wall {
-    //     return;
-    // };
 
     // if so, then update player position
     pos.x = next.x;

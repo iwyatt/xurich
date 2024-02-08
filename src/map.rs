@@ -16,7 +16,7 @@ pub struct Tile {
     pub tile: TileType,
     pub render: Renderable,
     pub location: Position,
-    //pub contents: Option<Entity>
+    pub contents: Vec<Option<Entity>>,
 }
 
 #[derive(Component, PartialEq, Copy, Clone)]
@@ -26,6 +26,10 @@ pub enum TileType {
 }
 
 impl Map {
+    pub fn clear_content_index(&mut self) {
+        self.tiles.clear();
+    }
+
     pub fn new() -> Map {
         let mut map = Map {
             rooms: Vec::new(),
@@ -34,6 +38,8 @@ impl Map {
             width: MAP_WIDTH,
             tiles: vec![
                 Tile {
+                    //contents: Vec::new(),
+                    contents: vec![None; (MAP_HEIGHT * MAP_WIDTH) as usize],
                     tile: TileType::Floor,
                     render: Renderable {
                         glyph: '.',
@@ -58,6 +64,7 @@ impl Map {
         for x in 0..MAP_WIDTH {
             //map.tiles[xy_idx(x, 0)] = TileType::Wall;
             map.tiles[xy_idx(x, 0)] = Tile {
+                contents: vec![None; (MAP_HEIGHT * MAP_WIDTH) as usize],
                 tile: TileType::Wall,
                 render: Renderable {
                     glyph: '#',
@@ -69,19 +76,24 @@ impl Map {
 
             // map.tiles[xy_idx(x, 49)] = TileType::Wall;
 
-            map.tiles[xy_idx(x, 49)] = Tile {
+            map.tiles[xy_idx(x, MAP_HEIGHT - 1)] = Tile {
+                contents: vec![None; (MAP_HEIGHT * MAP_WIDTH) as usize],
                 tile: TileType::Wall,
                 render: Renderable {
                     glyph: '#',
                     fg: Color::GRAY,
                     bg: Color::BLACK,
                 },
-                location: Position { x: x, y: 49 },
+                location: Position {
+                    x: x,
+                    y: MAP_HEIGHT - 1,
+                },
             };
         }
         for y in 0..50 {
             //map.tiles[xy_idx(0, y)] = TileType::Wall;
             map.tiles[xy_idx(0, y)] = Tile {
+                contents: vec![None; (MAP_HEIGHT * MAP_WIDTH) as usize],
                 tile: TileType::Wall,
                 render: Renderable {
                     glyph: '#',
@@ -92,14 +104,18 @@ impl Map {
             };
 
             // map.tiles[xy_idx(79, y)] = TileType::Wall;
-            map.tiles[xy_idx(79, y)] = Tile {
+            map.tiles[xy_idx(MAP_WIDTH - 1, y)] = Tile {
+                contents: vec![None; (MAP_HEIGHT * MAP_WIDTH) as usize],
                 tile: TileType::Wall,
                 render: Renderable {
                     glyph: '#',
                     fg: Color::GRAY,
                     bg: Color::BLACK,
                 },
-                location: Position { x: 79, y: y },
+                location: Position {
+                    x: MAP_WIDTH - 1,
+                    y: y,
+                },
             };
         }
 
@@ -107,13 +123,15 @@ impl Map {
         // First, obtain the thread-local RNG:
         let mut rng = rltk::RandomNumberGenerator::new();
 
-        for _i in 0..400 {
+        for _i in 0..(MAP_WIDTH * MAP_HEIGHT / 10) {
+            //approx 10% of map covered in walls
             let x = rng.roll_dice(1, MAP_WIDTH - 1);
             let y = rng.roll_dice(1, MAP_HEIGHT - 1);
             let idx = xy_idx(x, y);
             if idx != xy_idx(MAP_WIDTH / 2, MAP_HEIGHT / 2) {
                 //if wall position != middle of screen (player start)
                 map.tiles[idx] = Tile {
+                    contents: vec![None; (MAP_HEIGHT * MAP_WIDTH) as usize],
                     tile: TileType::Wall,
                     render: Renderable {
                         glyph: '#',
@@ -152,6 +170,7 @@ impl Map {
             blocked_tiles: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
             tiles: vec![
                 Tile {
+                    contents: vec![None; (MAP_HEIGHT * MAP_WIDTH) as usize],
                     tile: TileType::Wall,
                     render: Renderable {
                         glyph: '#',
@@ -187,8 +206,6 @@ impl Map {
             let h = rng.range(MIN_SIZE, MAX_SIZE);
             let x = rng.roll_dice(1, MAP_WIDTH - w - 1) - 1;
             let y = rng.roll_dice(1, MAP_HEIGHT - h - 1) - 1;
-            // let x = rng.roll_dice(1, MAP_WIDTH - w);
-            // let y = rng.roll_dice(1, MAP_HEIGHT - h);
             let new_room = rltk::Rect::with_size(x, y, w, h);
             let mut ok = true;
             for other_room in rooms.iter() {
@@ -216,18 +233,11 @@ impl Map {
                 rooms.push(new_room);
             }
         }
-        //     rooms.push(new_room);
-        // }
 
-        // let room1 = Recti::new(20, 15, 10, 15);
-        // let room2 = Recti::new(35, 15, 10, 15);
-
-        // apply_room_to_map(&room1, &mut map);
-        // apply_room_to_map(&room2, &mut map);
-        // apply_horizontal_tunnel(&mut map, 25, 40, 23);
+        // add rooms to map struct
         map.rooms = rooms;
-        //(map, rooms)
 
+        // return map
         map
     }
 }
@@ -304,27 +314,27 @@ impl BaseMap for Map {
         if self.is_exit_valid(x, y + 1) {
             exits.push((xy_idx(x, y + 1), 1.0))
         }; // up
-        if self.is_exit_valid(x + 1, y + 1) {
-            exits.push((xy_idx(x + 1, y + 1), 1.0))
-        }; // up-right
+           // if self.is_exit_valid(x + 1, y + 1) {
+           //     exits.push((xy_idx(x + 1, y + 1), 1.0))
+           // }; // up-right
         if self.is_exit_valid(x + 1, y) {
             exits.push((xy_idx(x + 1, y), 1.0))
         }; // right
-        if self.is_exit_valid(x + 1, y - 1) {
-            exits.push((xy_idx(x + 1, y - 1), 1.0))
-        }; // down-right
+           // if self.is_exit_valid(x + 1, y - 1) {
+           //     exits.push((xy_idx(x + 1, y - 1), 1.0))
+           // }; // down-right
         if self.is_exit_valid(x, y - 1) {
             exits.push((xy_idx(x, y - 1), 1.0))
         }; // down
-        if self.is_exit_valid(x - 1, y - 1) {
-            exits.push((xy_idx(x - 1, y - 1), 1.0))
-        }; // down-left
+           // if self.is_exit_valid(x - 1, y - 1) {
+           //     exits.push((xy_idx(x - 1, y - 1), 1.0))
+           // }; // down-left
         if self.is_exit_valid(x - 1, y) {
             exits.push((xy_idx(x - 1, y) - 1, 1.0))
         }; // left
-        if self.is_exit_valid(x - 1, y + 1) {
-            exits.push((xy_idx(x - 1, y + 1), 1.0))
-        }; // up-left
+           // if self.is_exit_valid(x - 1, y + 1) {
+           //     exits.push((xy_idx(x - 1, y + 1), 1.0))
+           // }; // up-left
 
         exits
     }
@@ -343,8 +353,8 @@ pub fn idx_xy(idx: usize) -> (i32, i32) {
     (x, y)
 }
 
+// determines where there are blocks on the map that are more than just walls.
 pub struct MapIndexingSystem {}
-
 impl MapIndexingSystem {
     pub fn run(
         mut query_map: Query<&mut Map>,
@@ -352,9 +362,6 @@ impl MapIndexingSystem {
     ) {
         let mut map = query_map.iter_mut().nth(0).unwrap();
         map.populate_blocked_tiles();
-
-        // let positions = query_position.iter().map(|mut p| p = &Position{x: p.x, y: p.y}).collect();
-        // let blocks = query_position.iter().map(|p| p = &Position{x: p.x, y: p.y});
 
         query_blocked_positions.iter().for_each(|pos| {
             //println!("blocked_pos: {:#?}", pos);
