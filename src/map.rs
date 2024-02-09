@@ -330,7 +330,7 @@ impl BaseMap for Map {
            //     exits.push((xy_idx(x - 1, y - 1), 1.0))
            // }; // down-left
         if self.is_exit_valid(x - 1, y) {
-            exits.push((xy_idx(x - 1, y) - 1, 1.0))
+            exits.push((xy_idx(x - 1, y), 1.0))
         }; // left
            // if self.is_exit_valid(x - 1, y + 1) {
            //     exits.push((xy_idx(x - 1, y + 1), 1.0))

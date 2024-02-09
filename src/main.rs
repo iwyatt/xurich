@@ -10,16 +10,16 @@ mod prelude {
     pub use crate::components::*;
     pub use crate::map::*;
     pub use crate::npc::*;
-    pub use crate::systems::entity_viewsheds;
+    pub use crate::systems::viewsheds;
     pub use bevy::prelude::*;
     pub use bevy_ascii_terminal::prelude::*;
     pub use rltk::*;
 }
-use crate::entity_viewsheds::get_visible_tiles;
-use crate::entity_viewsheds::update_viewsheds;
 use crate::systems::npc_ai::run_npc_ai;
 use crate::systems::player_input::player_walk;
 use crate::systems::rendering::*;
+use crate::viewsheds::get_visible_tiles;
+use crate::viewsheds::update_viewsheds;
 use prelude::*;
 
 fn main() {
