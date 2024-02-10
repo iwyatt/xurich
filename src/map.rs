@@ -16,7 +16,7 @@ pub struct Tile {
     pub tile: TileType,
     pub render: Renderable,
     pub location: Position,
-    pub contents: Vec<Option<Entity>>,
+    //pub contents: Vec<Option<Entity>>,
 }
 
 #[derive(Component, PartialEq, Copy, Clone)]
@@ -39,7 +39,7 @@ impl Map {
             tiles: vec![
                 Tile {
                     //contents: Vec::new(),
-                    contents: vec![None; (MAP_HEIGHT * MAP_WIDTH) as usize],
+                    //contents: vec![None; (MAP_HEIGHT * MAP_WIDTH) as usize],
                     tile: TileType::Floor,
                     render: Renderable {
                         glyph: '.',
@@ -64,7 +64,7 @@ impl Map {
         for x in 0..MAP_WIDTH {
             //map.tiles[xy_idx(x, 0)] = TileType::Wall;
             map.tiles[xy_idx(x, 0)] = Tile {
-                contents: vec![None; (MAP_HEIGHT * MAP_WIDTH) as usize],
+                //contents: vec![None; (MAP_HEIGHT * MAP_WIDTH) as usize],
                 tile: TileType::Wall,
                 render: Renderable {
                     glyph: '#',
@@ -77,7 +77,7 @@ impl Map {
             // map.tiles[xy_idx(x, 49)] = TileType::Wall;
 
             map.tiles[xy_idx(x, MAP_HEIGHT - 1)] = Tile {
-                contents: vec![None; (MAP_HEIGHT * MAP_WIDTH) as usize],
+                //contents: vec![None; (MAP_HEIGHT * MAP_WIDTH) as usize],
                 tile: TileType::Wall,
                 render: Renderable {
                     glyph: '#',
@@ -93,7 +93,7 @@ impl Map {
         for y in 0..50 {
             //map.tiles[xy_idx(0, y)] = TileType::Wall;
             map.tiles[xy_idx(0, y)] = Tile {
-                contents: vec![None; (MAP_HEIGHT * MAP_WIDTH) as usize],
+                //contents: vec![None; (MAP_HEIGHT * MAP_WIDTH) as usize],
                 tile: TileType::Wall,
                 render: Renderable {
                     glyph: '#',
@@ -105,7 +105,7 @@ impl Map {
 
             // map.tiles[xy_idx(79, y)] = TileType::Wall;
             map.tiles[xy_idx(MAP_WIDTH - 1, y)] = Tile {
-                contents: vec![None; (MAP_HEIGHT * MAP_WIDTH) as usize],
+                //contents: vec![None; (MAP_HEIGHT * MAP_WIDTH) as usize],
                 tile: TileType::Wall,
                 render: Renderable {
                     glyph: '#',
@@ -131,7 +131,7 @@ impl Map {
             if idx != xy_idx(MAP_WIDTH / 2, MAP_HEIGHT / 2) {
                 //if wall position != middle of screen (player start)
                 map.tiles[idx] = Tile {
-                    contents: vec![None; (MAP_HEIGHT * MAP_WIDTH) as usize],
+                    //contents: vec![None; (MAP_HEIGHT * MAP_WIDTH) as usize],
                     tile: TileType::Wall,
                     render: Renderable {
                         glyph: '#',
@@ -170,7 +170,7 @@ impl Map {
             blocked_tiles: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
             tiles: vec![
                 Tile {
-                    contents: vec![None; (MAP_HEIGHT * MAP_WIDTH) as usize],
+                    //contents: vec![None; (MAP_HEIGHT * MAP_WIDTH) as usize],
                     tile: TileType::Wall,
                     render: Renderable {
                         glyph: '#',

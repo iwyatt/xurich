@@ -3,27 +3,36 @@ pub use crate::prelude::*;
 #[derive(Component)]
 pub struct GameTerminal;
 
+// Actors - players, NPCs (enemies and friendly), interactables
+#[derive(Component, Debug)]
+pub struct Actors {
+    pub actors: Vec<Actors>,
+}
+
+#[derive(Component, Debug)]
+pub struct Actor;
+
 #[derive(Component)]
 pub struct Player;
 
 #[derive(Bundle)]
 pub struct PlayerBundle {
     pub name: Name,
-    pub marker: Player,
+    //pub marker: Player,
     pub viewshed: Viewshed,
     pub position: Position,
     pub renderable: Renderable,
     pub stats: CombatStats,
-    // We can nest/include another bundle.
-    // Add the components for a standard Bevy Sprite:
-    // sprite: SpriteSheetBundle,
+    pub markers: (Player, Actor), // We can nest/include another bundle.
+                                  // Add the components for a standard Bevy Sprite:
+                                  // sprite: SpriteSheetBundle,
 }
 
 impl Default for PlayerBundle {
     fn default() -> Self {
         Self {
             name: Name("Hero".into()),
-            marker: Player,
+            //marker: Player,
             viewshed: Viewshed {
                 visible_tiles: Vec::new(),
                 range: 3,
@@ -44,6 +53,7 @@ impl Default for PlayerBundle {
                 defense: 2,
                 power: 5,
             },
+            markers: (Player, Actor),
         }
     }
 }
@@ -93,3 +103,24 @@ pub struct CombatStats {
     pub defense: i32,
     pub power: i32,
 }
+
+#[derive(Component, Debug, Event)]
+pub struct CombatAttack {
+    pub source: Entity,
+    pub target: Entity,
+    // should these be on a weapon struct?
+    // pub range: i32,
+    pub damage: (i32, i32), // eg xdx eg 1d6,
+                            //pub attack_type: AttackType,
+                            // weapon name
+                            // weapon type
+                            // chance to hit
+                            // damage type(s)
+}
+
+// #[derive(Component, Debug)]
+// pub enum AttackType {
+//     Magic,
+//     Environmental,
+//     Item
+// }

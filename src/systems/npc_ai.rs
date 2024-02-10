@@ -1,11 +1,14 @@
+use std::borrow::Borrow;
+
 use crate::components;
 pub use crate::prelude::*;
 
 // impl NPC_AI {}
 pub fn run_npc_ai(
+    mut commands: Commands,
     mut paramset: ParamSet<(
-        Query<(&mut Position, &mut Viewshed, &mut NPC_AI), With<Enemy>>,
-        Query<&mut Position, With<Player>>,
+        Query<(Entity, &mut Position, &mut Viewshed, &mut NPC_AI), With<Enemy>>,
+        Query<(Entity, &mut Position), With<Player>>,
     )>,
     mut query_game_state: Query<&mut components::GameState>,
     mut query_terminal: Query<&mut Terminal>,
@@ -13,7 +16,6 @@ pub fn run_npc_ai(
 ) {
     let mut terminal = query_terminal.iter_mut().nth(0).unwrap();
     let mut map = query_map.iter_mut().nth(0).unwrap();
-    let mut player_position = Position { x: 0, y: 0 };
     let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
 
     // skip if the game state is still paused
@@ -23,15 +25,22 @@ pub fn run_npc_ai(
     // otherwise set the game state to paused regardless of monter ai outcome
     game_state.runstate = RunState::Paused;
 
+    // set player entity id and position
+    //let enemy_query = paramset.p0();
+    // let player_query = paramset.p1();
+    // let player = player_query.iter().nth(0).unwrap();
+    let mut player_position = Position { x: 0, y: 0 };
+    let mut player_entity = Entity::PLACEHOLDER;
     // set the player position variable to use
-    for position in paramset.p1().iter() {
-        player_position = position.clone();
-        //println!("{:#?}", player_position);
+    for player in paramset.p1().iter() {
+        (player_position, player_entity) = (player.1.clone(), player.0.clone());
     }
+    println!("player_position: {:#?}", player_position);
 
     // process ai for each enemy with a position, viewshed, and NPC_AI
     paramset.p0().iter_mut().for_each(|enemy| {
-        let (mut pos, mut view, mut ai) = enemy;
+        //for enemy in paramset.p0().iter_mut() {
+        let (entity, mut pos, mut view, mut ai) = enemy;
         //println!("ai.state: {:#?}", ai.state);
         match ai.state {
             NPC_AI_State::Inactive => {
@@ -58,10 +67,10 @@ pub fn run_npc_ai(
             }
             NPC_AI_State::Active => {
                 // get distance to player in order to inform what action monster takes
-                let distance_to_player = rltk::DistanceAlg::Pythagoras.distance2d(
-                    Point::new(player_position.x, player_position.y),
-                    Point::new(pos.x, pos.y),
-                );
+                // let distance_to_player = rltk::DistanceAlg::Pythagoras.distance2d(
+                //     Point::new(player.1.x, player.1.y),
+                //     Point::new(pos.x, pos.y),
+                // );
                 //println!("distance_to_player: {:#?}", distance_to_player);
 
                 // get path (and # of steps) from NPC to player
@@ -94,6 +103,18 @@ pub fn run_npc_ai(
                         // if (next_x != player_position.x || next_y != player_position.y)
                         //     && !map.blocked_tiles[xy_idx(next_x, next_y)]
                         {
+                            //define the parameters of the combat attack
+                            let combat_attack: CombatAttack = CombatAttack {
+                                source: enemy.0,
+                                //TODO: need to change this to be whatever entity is occupying the space that is
+                                // trying to be moved in to
+                                target: player_entity,
+                                damage: (1, 4),
+                            };
+
+                            //insert the combat attack to be resolved in the next run of the system
+                            commands.spawn(combat_attack);
+
                             let npc_text = "Attack!".to_string();
                             println!("npc_text: {:#?}", npc_text);
                             let npc_text_pos_x = std::cmp::min(

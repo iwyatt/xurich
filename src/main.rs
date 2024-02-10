@@ -15,6 +15,7 @@ mod prelude {
     pub use bevy_ascii_terminal::prelude::*;
     pub use rltk::*;
 }
+use crate::systems::combat::resolve_combat_events;
 use crate::systems::npc_ai::run_npc_ai;
 use crate::systems::player_input::player_walk;
 use crate::systems::rendering::*;
@@ -34,6 +35,7 @@ fn main() {
                 get_visible_tiles,
                 update_viewsheds,
                 run_npc_ai,
+                resolve_combat_events,
                 get_visible_tiles,
                 update_viewsheds,
                 tick,
