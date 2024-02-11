@@ -5,6 +5,7 @@ pub fn resolve_combat_events(
     //mut query_player_pos: Query<(&Position, &mut Viewshed), With<Player>>,
     mut query_actors: Query<(&mut Actor, &mut CombatStats)>,
     query_combat_attacks: Query<&CombatAttack>,
+    mut ev_combat: EventReader<CombatAttack>,
     //query_entities: Query<(Entity, &CombatStats)>,
     //mut event_combat_attack: EventReader<CombatAttack>,
 ) {
@@ -12,7 +13,9 @@ pub fn resolve_combat_events(
     // for attack in event_combat_attack.iter() {
 
     // }
-
+    for e in ev_combat.read() {
+        println!("e in ev_combat.iter(): {:#?}", e);
+    }
     let mut actors: Vec<(&Actor, &CombatStats)> = Vec::new();
 
     query_actors.iter().for_each(|a| {
@@ -29,7 +32,7 @@ pub fn resolve_combat_events(
         //let source = query_combat_attacks.get(attack.source).unwrap();
         let mut target = query_actors.get_mut(attack.target).unwrap();
         target.1.hp -= rng.roll_dice(attack.damage.0, attack.damage.1);
-        println!("target.1.hp: {:#?}", target.1.hp);
+        // println!("target.1.hp: {:#?}", target.1.hp);
     });
 }
 

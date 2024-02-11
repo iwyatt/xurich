@@ -42,6 +42,7 @@ fn main() {
             )
                 .chain(),
         )
+        .add_event::<CombatAttack>()
         //.add_systems(Update, tick)
         .run();
 }

@@ -6,6 +6,7 @@ pub use crate::prelude::*;
 // impl NPC_AI {}
 pub fn run_npc_ai(
     mut commands: Commands,
+    mut ev_combat: EventWriter<CombatAttack>,
     mut paramset: ParamSet<(
         Query<(Entity, &mut Position, &mut Viewshed, &mut NPC_AI), With<Enemy>>,
         Query<(Entity, &mut Position), With<Player>>,
@@ -113,7 +114,8 @@ pub fn run_npc_ai(
                             };
 
                             //insert the combat attack to be resolved in the next run of the system
-                            commands.spawn(combat_attack);
+                            //commands.spawn(combat_attack);
+                            ev_combat.send(combat_attack);
 
                             let npc_text = "Attack!".to_string();
                             println!("npc_text: {:#?}", npc_text);
