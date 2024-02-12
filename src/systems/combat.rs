@@ -1,4 +1,3 @@
-use crate::components;
 pub use crate::prelude::*;
 
 pub fn resolve_combat_events(
@@ -13,27 +12,31 @@ pub fn resolve_combat_events(
     // for attack in event_combat_attack.iter() {
 
     // }
-    for e in ev_combat.read() {
-        println!("e in ev_combat.iter(): {:#?}", e);
-    }
     let mut actors: Vec<(&Actor, &CombatStats)> = Vec::new();
-
     query_actors.iter().for_each(|a| {
         let actor = a.0;
         let stats = a.1;
         actors.push((actor, stats));
     });
 
-    query_combat_attacks.iter().for_each(|attack| {
+    for e in ev_combat.read() {
+        println!("e in ev_combat.iter(): {:#?}", e);
         let mut rng = RandomNumberGenerator::new();
-        //actors[1].1.hp -= attack.damage;
-        //actors[attack.target].1 -= attack.damage;
-        //let target = query_combat_attacks.get_mut(attack.target);
-        //let source = query_combat_attacks.get(attack.source).unwrap();
-        let mut target = query_actors.get_mut(attack.target).unwrap();
-        target.1.hp -= rng.roll_dice(attack.damage.0, attack.damage.1);
-        // println!("target.1.hp: {:#?}", target.1.hp);
-    });
+        let mut target = query_actors.get_mut(e.target).unwrap();
+        target.1.hp -= rng.roll_dice(e.damage.0, e.damage.1);
+        println!("target.1.hp: {:#?}", target.1.hp);
+    }
+
+    // query_combat_attacks.iter().for_each(|attack| {
+    //     let mut rng = RandomNumberGenerator::new();
+    //     //actors[1].1.hp -= attack.damage;
+    //     //actors[attack.target].1 -= attack.damage;
+    //     //let target = query_combat_attacks.get_mut(attack.target);
+    //     //let source = query_combat_attacks.get(attack.source).unwrap();
+    //     let mut target = query_actors.get_mut(attack.target).unwrap();
+    //     target.1.hp -= rng.roll_dice(attack.damage.0, attack.damage.1);
+    //     // println!("target.1.hp: {:#?}", target.1.hp);
+    // });
 }
 
 // example from documentation
