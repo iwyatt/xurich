@@ -3,7 +3,11 @@ pub use crate::prelude::*;
 
 pub fn player_walk(
     input: Res<Input<KeyCode>>,
-    mut player_pos: Query<(&Player, &mut Position)>,
+    mut ev_combat: EventWriter<CombatAttack>,
+    //mut player_pos: Query<(Entity, &Player, &mut Position)>,
+    mut entity_positions: Query<&mut Position>,
+    mut player_pos: Query<(Entity, &Player), With<Position>>,
+    query_enemy: Query<Entity, (With<Enemy>, With<Position>)>,
     query_map: Query<&Map>,
     mut query_viewshed: Query<&mut Viewshed>,
     mut query_game_state: Query<&mut components::GameState>,
@@ -14,19 +18,66 @@ pub fn player_walk(
         return;
     }
 
-    let (player, mut pos) = player_pos
+    let (entity, player) = player_pos //rename player_pos to another variable
         .iter_mut()
         .nth(0)
-        .map(|(player, mut pos)| (player, pos))
+        .map(|(entity, player)| (entity, player))
+        .unwrap();
+
+    let mut pos = entity_positions
+        .get_component_mut::<Position>(entity)
         .unwrap();
 
     let curr = IVec2::new(pos.x, pos.y);
     let next = curr + move_input;
 
     // check if player can validly move to desired spot
+    // if map.blocked_tiles[xy_idx(next.x, next.y)] {
+    //     return;
+    // };
+
+    //     fn print_selected_character_name_system(
+    //         query: Query<&Character>,
+    //         selection: Res<SelectedCharacter>
+    //  )
+    //  {
+    //      if let Ok(selected_character) = query.get_component::<Character>(selection.entity) {
+    //          println!("{}", selected_character.name);
+    //      }
+    //  }
+
     if map.blocked_tiles[xy_idx(next.x, next.y)] {
+        //define the parameters of the combat attack
+        // let enemy = query_enemy
+        //     .iter()
+        //     .filter(|e| xy_idx(e.2.x, e.2.y) == xy_idx(next.x, next.y))
+        //     .map(|e| e.0)
+        //     .nth(0)
+        //     .unwrap();
+
+        query_enemy.iter().for_each(|e| {
+            //println!("query_enemy.iter().for_each(|e| : {:#?}", &e);
+            if let Ok(enemy_pos) = entity_positions.get_component::<Position>(e) {
+                //println!("Ok(enemy_pos) : {:#?}", &enemy_pos);
+                if xy_idx(enemy_pos.x, enemy_pos.y) == xy_idx(next.x, next.y) {
+                    let combat_attack: CombatAttack = CombatAttack {
+                        source: entity,
+                        // TODO: need to change this to be whatever entity is occupying the space that is
+                        // trying to be moved in to
+                        target: e,
+                        damage: (1, 4), //TODO: Update the damage to be based on the combat stats
+                    };
+                    println!("player_combat_attack: {:#?}", &combat_attack);
+                    ev_combat.send(combat_attack);
+                }
+            }
+        });
+        // .filter(|e| xy_idx(e.x, e.y) == xy_idx(next.x, next.y))
+        // .map(|e| )
+        // .nth(0)
+        // .unwrap();
         return;
-    };
+    }
 
     // if so, then update player position
     pos.x = next.x;

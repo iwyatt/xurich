@@ -2,7 +2,7 @@ pub use crate::prelude::*;
 
 pub fn resolve_combat_events(
     //mut query_player_pos: Query<(&Position, &mut Viewshed), With<Player>>,
-    mut query_actors: Query<(&mut Actor, &mut CombatStats)>,
+    mut query_actors: Query<(&mut Actor, &mut CombatStats)>, //TODO: Remove Actor Tag from Systems
     query_combat_attacks: Query<&CombatAttack>,
     mut ev_combat: EventReader<CombatAttack>,
     //query_entities: Query<(Entity, &CombatStats)>,
@@ -24,7 +24,7 @@ pub fn resolve_combat_events(
         let mut rng = RandomNumberGenerator::new();
         let mut target = query_actors.get_mut(e.target).unwrap();
         target.1.hp -= rng.roll_dice(e.damage.0, e.damage.1);
-        println!("target.1.hp: {:#?}", target.1.hp);
+        //println!("target.1.hp: {:#?}", target.1.hp);
     }
 
     // query_combat_attacks.iter().for_each(|attack| {

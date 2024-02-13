@@ -36,7 +36,7 @@ pub fn run_npc_ai(
     for player in paramset.p1().iter() {
         (player_position, player_entity) = (player.1.clone(), player.0.clone());
     }
-    println!("player_position: {:#?}", player_position);
+    //println!("player_position: {:#?}", player_position);
 
     // process ai for each enemy with a position, viewshed, and NPC_AI
     paramset.p0().iter_mut().for_each(|enemy| {
@@ -49,7 +49,7 @@ pub fn run_npc_ai(
                     .visible_tiles
                     .contains(&Point::new(player_position.x, player_position.y))
                 {
-                    println!("Player within Monster Visibility");
+                    //println!("Player within Monster Visibility");
                     ai.state = NPC_AI_State::Active;
 
                     // TODO: Move NPC emotes to UI logic
@@ -80,7 +80,7 @@ pub fn run_npc_ai(
                     xy_idx(player_position.x, player_position.y) as i32,
                     &mut *map,
                 );
-                println!("path.steps.len(): {:#?}", path.steps.len());
+                //println!("path.steps.len(): {:#?}", path.steps.len());
 
                 let (next_x, next_y) = (
                     path.steps[1] as i32 % map.width,
@@ -107,10 +107,10 @@ pub fn run_npc_ai(
                             //define the parameters of the combat attack
                             let combat_attack: CombatAttack = CombatAttack {
                                 source: enemy.0,
-                                //TODO: need to change this to be whatever entity is occupying the space that is
+                                // TODO: need to change this to be whatever entity is occupying the space that is
                                 // trying to be moved in to
                                 target: player_entity,
-                                damage: (1, 4),
+                                damage: (1, 4), //TODO: Update the damage to be based on the combat stats
                             };
 
                             //insert the combat attack to be resolved in the next run of the system
@@ -118,7 +118,7 @@ pub fn run_npc_ai(
                             ev_combat.send(combat_attack);
 
                             let npc_text = "Attack!".to_string();
-                            println!("npc_text: {:#?}", npc_text);
+                            //println!("npc_text: {:#?}", npc_text);
                             let npc_text_pos_x = std::cmp::min(
                                 std::cmp::max(pos.x - (npc_text.len() / 2) as i32, 0),
                                 MAP_WIDTH - npc_text.len() as i32,

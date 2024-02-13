@@ -102,6 +102,7 @@ fn setup(mut commands: Commands) {
                 ..Default::default()
             })
             .insert(BlocksTile)
-            .insert(Enemy);
+            .insert(Enemy)
+            .insert(Actor);
     }
 }
