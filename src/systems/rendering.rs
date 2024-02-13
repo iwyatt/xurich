@@ -62,6 +62,11 @@ pub fn tick(
             terminal.put_char([pos.x, pos.y], rend.glyph.fg(rend.fg).bg(rend.bg))
         }
     });
+
+    // render ui
+    // let mut ui = query_terminal.iter_mut().nth(1).unwrap();
+    // ui.put_string([0, 0], "Hello".fg(Color::WHITE));
+    terminal.put_string([0, MAP_HEIGHT + 1], "Hello".fg(Color::WHITE));
 }
 
 // add function to display received text at position for seconds

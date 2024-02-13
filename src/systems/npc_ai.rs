@@ -27,11 +27,9 @@ pub fn run_npc_ai(
     game_state.runstate = RunState::Paused;
 
     // set player entity id and position
-    //let enemy_query = paramset.p0();
-    // let player_query = paramset.p1();
-    // let player = player_query.iter().nth(0).unwrap();
     let mut player_position = Position { x: 0, y: 0 };
     let mut player_entity = Entity::PLACEHOLDER;
+
     // set the player position variable to use
     for player in paramset.p1().iter() {
         (player_position, player_entity) = (player.1.clone(), player.0.clone());
@@ -40,7 +38,8 @@ pub fn run_npc_ai(
 
     // process ai for each enemy with a position, viewshed, and NPC_AI
     paramset.p0().iter_mut().for_each(|enemy| {
-        //for enemy in paramset.p0().iter_mut() {
+        //for each enemy process according to state and distance to player
+        // TODO: Add support for different AI scripts eg ranged damage dealers
         let (entity, mut pos, mut view, mut ai) = enemy;
         //println!("ai.state: {:#?}", ai.state);
         match ai.state {
