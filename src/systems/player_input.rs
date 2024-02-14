@@ -76,15 +76,17 @@ pub fn player_walk(
         // .map(|e| )
         // .nth(0)
         // .unwrap();
-        return;
+        // return;
+    } else {
+        // if not blocked, then update player position
+        pos.x = next.x;
+        pos.y = next.y;
+
+        let mut viewshed = query_viewshed.iter_mut().nth(0).unwrap();
+        viewshed.dirty = true;
     }
 
-    // if so, then update player position
-    pos.x = next.x;
-    pos.y = next.y;
-
-    let mut viewshed = query_viewshed.iter_mut().nth(0).unwrap();
-    viewshed.dirty = true;
+    // end of player's turn: switch game state so NPCs can take their turn
     let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
     game_state.runstate = RunState::Running;
 }

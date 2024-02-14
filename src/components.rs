@@ -114,7 +114,7 @@ pub struct CombatAttack {
     // should these be on a weapon struct?
     // pub range: i32,
     pub damage: (i32, i32), // eg xdx eg 1d6,
-                            //pub attack_type: AttackType,
+                            // pub attack_type: AttackType,
                             // weapon name
                             // weapon type
                             // chance to hit

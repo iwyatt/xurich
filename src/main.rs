@@ -70,13 +70,6 @@ fn setup(mut commands: Commands) {
         .spawn(TiledCameraBundle::new().with_tile_count([MAP_WIDTH, MAP_HEIGHT + 1]))
         .insert(GameTerminal);
 
-    // Create UI terminal
-    // let ui_term = Terminal::new([MAP_WIDTH, 1]).with_border(Border::single_line());
-    // let ui_bundle = TerminalBundle::from(ui_term);
-    // //commands.spawn((ui_bundle, AutoCamera)).insert(UI_Terminal);
-    // commands.spawn(ui_bundle).insert(UI_Terminal);
-    // let uicam = Camera2dBundle::
-
     //let map = Map::new();
     let map = Map::new_map_rooms_and_corridors();
     commands.spawn(map.clone()); //TODO: why do I need this clone() ?

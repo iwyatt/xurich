@@ -5,6 +5,7 @@ pub use crate::prelude::*;
 pub fn tick(
     mut query_terminal: Query<&mut Terminal>,
     query_entities: Query<(&Position, &Renderable)>,
+    query_combat_stats: Query<&CombatStats, With<Player>>,
     query_maps: Query<&Map>,
     mut query_player_viewshed: Query<&mut Viewshed, With<Player>>,
     // mut query_game_state: Query<&mut components::GameState>,
@@ -66,7 +67,16 @@ pub fn tick(
     // render ui
     // let mut ui = query_terminal.iter_mut().nth(1).unwrap();
     // ui.put_string([0, 0], "Hello".fg(Color::WHITE));
-    terminal.put_string([0, MAP_HEIGHT + 1], "Hello".fg(Color::WHITE));
+    let player_combat_stats = query_combat_stats.single();
+    let line = [
+        "HP:",
+        //player_combat_stats.hp.to_string().as_str(),
+        &player_combat_stats.hp.to_string(),
+        "/",
+        &player_combat_stats.max_hp.to_string(),
+    ]
+    .join(" ");
+    terminal.put_string([0, MAP_HEIGHT + 1], line.fg(Color::WHITE));
 }
 
 // add function to display received text at position for seconds
