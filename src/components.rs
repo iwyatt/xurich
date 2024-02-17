@@ -67,7 +67,7 @@ pub struct Position {
     pub y: i32,
 }
 
-#[derive(Component, PartialEq, Clone)]
+#[derive(Component, PartialEq, Clone, Debug)]
 pub struct Renderable {
     pub glyph: char,
     pub fg: Color,

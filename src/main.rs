@@ -9,7 +9,6 @@ mod prelude {
     pub const MAP_WIDTH: i32 = 80;
     pub const MAP_HEIGHT: i32 = 50;
     pub use crate::components::*;
-    pub use crate::gui::*;
     pub use crate::map::*;
     pub use crate::npc::*;
     pub use crate::systems::viewsheds;
@@ -23,7 +22,6 @@ use crate::systems::player_input::player_walk;
 use crate::systems::rendering::*;
 use crate::viewsheds::get_visible_tiles;
 use crate::viewsheds::update_viewsheds;
-use bevy_ascii_terminal::TiledCameraBundle;
 use prelude::*;
 
 fn main() {
@@ -58,16 +56,14 @@ fn setup(mut commands: Commands) {
     };
     commands.spawn(game_state);
 
-    // Create the terminal
-    //let terminal = Terminal::new([MAP_WIDTH, MAP_HEIGHT]).with_border(Border::single_line());
+    // define the terminal
     let term_size = [MAP_WIDTH, MAP_HEIGHT + 2]; // +2 for 2 lines of UI. Note this is 1-index, not 0-index unlike term.put_char
     let terminal = Terminal::new(term_size).with_border(Border::single_line());
     let term_bundle = TerminalBundle::from(terminal);
-    commands.spawn((term_bundle, AutoCamera));
 
+    // create the terminal and camera
     commands
-        //.spawn((term_bundle, AutoCamera))
-        .spawn(TiledCameraBundle::new().with_tile_count([MAP_WIDTH, MAP_HEIGHT + 1]))
+        .spawn((term_bundle, AutoCamera))
         .insert(GameTerminal);
 
     //let map = Map::new();

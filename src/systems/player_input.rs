@@ -29,6 +29,7 @@ pub fn player_walk(
         .unwrap();
 
     let curr = IVec2::new(pos.x, pos.y);
+    //println!("player position IVec2::new(pos.x, pos.y) : {:#?}", curr);
     let next = curr + move_input;
 
     // check if player can validly move to desired spot
