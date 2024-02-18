@@ -23,6 +23,7 @@ use crate::systems::rendering::*;
 use crate::viewsheds::get_visible_tiles;
 use crate::viewsheds::update_viewsheds;
 use prelude::*;
+use systems::spawner;
 
 fn main() {
     App::new()
@@ -50,6 +51,10 @@ fn main() {
 
 // set up loop
 fn setup(mut commands: Commands) {
+    // set random seed
+    let mut myrng = RNG(RandomNumberGenerator::seeded(0)); // TODO: Change this to be a u64 hash of player name/year
+                                                           //commands.spawn(myrng);
+
     // set the game state
     let game_state = components::GameState {
         runstate: RunState::Running,
@@ -67,7 +72,7 @@ fn setup(mut commands: Commands) {
         .insert(GameTerminal);
 
     //let map = Map::new();
-    let map = Map::new_map_rooms_and_corridors();
+    let map = Map::new_map_rooms_and_corridors(&mut myrng);
     commands.spawn(map.clone()); //TODO: why do I need this clone() ?
 
     // TODO: move player and npc spawn into map generation
@@ -83,30 +88,35 @@ fn setup(mut commands: Commands) {
 
     // spawn npc bundle
     for i in 1..map.rooms.len() {
-        let mut rng = rltk::RandomNumberGenerator::new();
-        let roll = rng.roll_dice(1, 2);
-        let (glyph, name) = match roll {
-            1 => ('G', "Goblin".to_string()),
-            2 => ('O', "Orc".to_string()),
-            _ => ('X', "Xenity".to_string()),
+        let position = Position {
+            x: map.rooms[i].center().x,
+            y: map.rooms[i].center().y,
         };
-
-        commands
-            .spawn(NPCBundle {
-                name: Name(name.into()),
-                position: Position {
-                    x: map.rooms[i].center().x,
-                    y: map.rooms[i].center().y,
-                },
-                renderable: Renderable {
-                    glyph: glyph,
-                    fg: Color::YELLOW,
-                    bg: Color::BLACK,
-                },
-                ..Default::default()
-            })
-            .insert(BlocksTile)
-            .insert(Enemy)
-            .insert(Actor);
+        spawner::spawn_random_mob(&mut commands, position, &mut myrng);
+        //let mut rng = rltk::RandomNumberGenerator::new();
+        // let roll = myrng.0.roll_dice(1, 2);
+        // let (glyph, name) = match roll {
+        //     1 => ('G', "Goblin".to_string()),
+        //     2 => ('O', "Orc".to_string()),
+        //     _ => ('X', "Xenity".to_string()),
+        // };
+        // commands
+        //     .spawn(NPCBundle {
+        //         name: Name(name.into()),
+        //         position: Position {
+        //             x: map.rooms[i].center().x,
+        //             y: map.rooms[i].center().y,
+        //         },
+        //         renderable: Renderable {
+        //             glyph: glyph,
+        //             fg: Color::YELLOW,
+        //             bg: Color::BLACK,
+        //         },
+        //         ..Default::default()
+        //     })
+        //     .insert(BlocksTile)
+        //     .insert(Enemy)
+        //     .insert(Actor);
     }
+    commands.spawn(myrng);
 }

@@ -19,7 +19,10 @@ pub fn tick(
     mut query_player_viewshed: Query<&mut Viewshed, With<Player>>,
     // mut query_game_state: Query<&mut components::GameState>,
     query_windows: Query<&Window, With<PrimaryWindow>>,
+    //mut query_rng: Query<&mut RNG>,
 ) {
+    // let mut rng = query_rng.single_mut();
+    // println!("rng: {:#?}", rng.0.roll_dice(1, 6));
     let map = query_maps.iter().nth(0).unwrap();
     // let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
     let mut terminal = query_terminal.iter_mut().nth(0).unwrap();
@@ -92,7 +95,7 @@ pub fn tick(
         let mouse_map_pos = window_pos_to_map_pos(camera, &cursor_world_position);
         // println!("mouse_idx_pos: {:#?}", mouse_idx_pos);
 
-        // debug to terminal: 
+        // debug to terminal:
         // terminal.put_string(
         //     [0, MAP_HEIGHT],
         //     ["world cursor", &cursor_world_position.to_string()]

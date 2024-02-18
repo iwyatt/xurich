@@ -8,7 +8,9 @@ pub fn resolve_combat_events(
     mut ev_combat: EventReader<CombatAttack>,
     //query_entities: Query<(Entity, &CombatStats)>,
     //mut event_combat_attack: EventReader<CombatAttack>,
+    mut query_rng: Query<&mut RNG>,
 ) {
+    let mut rng = query_rng.single_mut();
     let mut actors: Vec<(&Actor, &CombatStats)> = Vec::new();
     query_actors.iter().for_each(|a| {
         let actor = a.0;
@@ -18,9 +20,9 @@ pub fn resolve_combat_events(
 
     for e in ev_combat.read() {
         // println!("e in ev_combat.iter(): {:#?}", e);
-        let mut rng = RandomNumberGenerator::new();
+        //let mut rng = RandomNumberGenerator::new();
         let mut target = query_actors.get_mut(e.target).unwrap();
-        target.1.hp -= rng.roll_dice(e.damage.0, e.damage.1);
+        target.1.hp -= rng.0.roll_dice(e.damage.0, e.damage.1);
         println!("target.1.hp: {:#?}", target.1.hp);
         if target.1.hp <= 0 {
             commands.entity(e.target).despawn() //TODO: Add game over screen for player

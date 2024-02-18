@@ -30,7 +30,7 @@ impl Map {
         self.tiles.clear();
     }
 
-    pub fn new() -> Map {
+    pub fn new(mut rng: &mut RNG) -> Map {
         let mut map = Map {
             rooms: Vec::new(),
             blocked_tiles: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
@@ -121,12 +121,12 @@ impl Map {
 
         // Now we'll randomly splat a bunch of walls. It won't be pretty, but it's a decent illustration.
         // First, obtain the thread-local RNG:
-        let mut rng = rltk::RandomNumberGenerator::new();
+        //let mut rng = rltk::RandomNumberGenerator::new();
 
         for _i in 0..(MAP_WIDTH * MAP_HEIGHT / 10) {
             //approx 10% of map covered in walls
-            let x = rng.roll_dice(1, MAP_WIDTH - 1);
-            let y = rng.roll_dice(1, MAP_HEIGHT - 1);
+            let x = rng.0.roll_dice(1, MAP_WIDTH - 1);
+            let y = rng.0.roll_dice(1, MAP_HEIGHT - 1);
             let idx = xy_idx(x, y);
             if idx != xy_idx(MAP_WIDTH / 2, MAP_HEIGHT / 2) {
                 //if wall position != middle of screen (player start)
@@ -164,7 +164,7 @@ impl Map {
         //self.tiles[idx as usize].tile != TileType::Wall
     }
 
-    pub fn new_map_rooms_and_corridors() -> Map {
+    pub fn new_map_rooms_and_corridors(mut rng: &mut RNG) -> Map {
         let mut map = Map {
             rooms: Vec::new(),
             blocked_tiles: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
@@ -199,13 +199,13 @@ impl Map {
         const MIN_SIZE: i32 = 6;
         const MAX_SIZE: i32 = 10;
 
-        let mut rng = RandomNumberGenerator::new();
+        //let mut rng = RandomNumberGenerator::new();
 
         for _ in 0..MAX_ROOMS {
-            let w = rng.range(MIN_SIZE, MAX_SIZE);
-            let h = rng.range(MIN_SIZE, MAX_SIZE);
-            let x = rng.roll_dice(1, MAP_WIDTH - w - 1) - 1;
-            let y = rng.roll_dice(1, MAP_HEIGHT - h - 1) - 1;
+            let w = rng.0.range(MIN_SIZE, MAX_SIZE);
+            let h = rng.0.range(MIN_SIZE, MAX_SIZE);
+            let x = rng.0.roll_dice(1, MAP_WIDTH - w - 1) - 1;
+            let y = rng.0.roll_dice(1, MAP_HEIGHT - h - 1) - 1;
             let new_room = rltk::Rect::with_size(x, y, w, h);
             let mut ok = true;
             for other_room in rooms.iter() {
@@ -222,7 +222,7 @@ impl Map {
                         rooms[rooms.len() - 1].center().x,
                         rooms[rooms.len() - 1].center().y,
                     );
-                    if rng.range(0, 2) == 1 {
+                    if rng.0.range(0, 2) == 1 {
                         apply_horizontal_tunnel(&mut map, prev_x, new_x, prev_y);
                         apply_vertical_tunnel(&mut map, prev_y, new_y, new_x);
                     } else {

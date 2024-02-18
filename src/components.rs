@@ -127,3 +127,30 @@ pub struct CombatAttack {
 //     Environmental,
 //     Item
 // }
+
+#[derive(Component, Debug)]
+pub struct Item {
+    pub name: Name,
+    //pub item_type: ItemType,
+    pub renderable: Renderable,
+    pub position: Option<Position>,
+}
+
+// #[derive(Debug)]
+// pub enum ItemType {
+//     Weapon,
+//     Armor,
+//     Consumable,
+// }
+
+#[derive(Component, Debug)]
+pub struct Weapon;
+
+#[derive(Component, Debug)]
+pub struct Armor;
+
+#[derive(Component, Debug)]
+pub struct Consumable;
+
+#[derive(Component, Clone)]
+pub struct RNG(pub RandomNumberGenerator);
