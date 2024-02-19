@@ -6,6 +6,8 @@ mod npc;
 mod systems;
 mod prelude {
     // game play area max width and height
+    // set random seed
+    pub const RNG_SEED: u64 = 0;
     pub const MAP_WIDTH: i32 = 80;
     pub const MAP_HEIGHT: i32 = 50;
     pub use crate::components::*;
@@ -51,9 +53,8 @@ fn main() {
 
 // set up loop
 fn setup(mut commands: Commands) {
-    // set random seed
-    let mut myrng = RNG(RandomNumberGenerator::seeded(0)); // TODO: Change this to be a u64 hash of player name/year
-                                                           //commands.spawn(myrng);
+    let mut myrng = RNG(RandomNumberGenerator::seeded(RNG_SEED)); // TODO: Change this to be a u64 hash of player name/year
+                                                                  //commands.spawn(myrng);
 
     // set the game state
     let game_state = components::GameState {
@@ -71,52 +72,27 @@ fn setup(mut commands: Commands) {
         .spawn((term_bundle, AutoCamera))
         .insert(GameTerminal);
 
-    //let map = Map::new();
-    let map = Map::new_map_rooms_and_corridors(&mut myrng);
-    commands.spawn(map.clone()); //TODO: why do I need this clone() ?
+    //let map = Map::default();
+    //let nmap = MapGenerator::new();
+    let (map, player_start_position, mob_start_positions) = Map::random();
+    //let (map, player_start_position) = Map::new_map_cellularautomata(MapGenerator::new());
 
     // TODO: move player and npc spawn into map generation
-
-    // spawn player bundle in center of first room on map
-    commands.spawn(PlayerBundle {
-        position: Position {
-            x: map.rooms[0].center().x,
-            y: map.rooms[0].center().y,
-        },
-        ..Default::default()
-    });
+    // spawn player on map
+    spawner::spawn_player(&mut commands, player_start_position);
 
     // spawn npc bundle
-    for i in 1..map.rooms.len() {
-        let position = Position {
-            x: map.rooms[i].center().x,
-            y: map.rooms[i].center().y,
-        };
-        spawner::spawn_random_mob(&mut commands, position, &mut myrng);
-        //let mut rng = rltk::RandomNumberGenerator::new();
-        // let roll = myrng.0.roll_dice(1, 2);
-        // let (glyph, name) = match roll {
-        //     1 => ('G', "Goblin".to_string()),
-        //     2 => ('O', "Orc".to_string()),
-        //     _ => ('X', "Xenity".to_string()),
-        // };
-        // commands
-        //     .spawn(NPCBundle {
-        //         name: Name(name.into()),
-        //         position: Position {
-        //             x: map.rooms[i].center().x,
-        //             y: map.rooms[i].center().y,
-        //         },
-        //         renderable: Renderable {
-        //             glyph: glyph,
-        //             fg: Color::YELLOW,
-        //             bg: Color::BLACK,
-        //         },
-        //         ..Default::default()
-        //     })
-        //     .insert(BlocksTile)
-        //     .insert(Enemy)
-        //     .insert(Actor);
-    }
+    mob_start_positions
+        .iter()
+        .for_each(|pos| spawner::spawn_random_mob(&mut commands, pos.clone(), &mut myrng));
+
+    // for i in 1..map.rooms.len() {
+    //     let position = Position {
+    //         x: map.rooms[i].center().x,
+    //         y: map.rooms[i].center().y,
+    //     };
+    //     spawner::spawn_random_mob(&mut commands, position, &mut myrng);
+    // }
+    commands.spawn(map);
     commands.spawn(myrng);
 }

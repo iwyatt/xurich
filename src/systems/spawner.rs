@@ -24,3 +24,12 @@ pub fn spawn_random_mob(mut commands: &mut Commands, position: Position, mut rng
         .insert(Enemy)
         .insert(Actor);
 }
+
+pub fn spawn_player(mut commands: &mut Commands, position: Position) {
+    commands.spawn(PlayerBundle {
+        position: position,
+        ..Default::default()
+    });
+}
+
+pub fn spawn_map_entities(mut commands: &mut Commands, map: &Map, mut rng: &mut RNG) {}
