@@ -1,5 +1,5 @@
 pub use crate::prelude::*;
-use std::cmp::{max, min};
+use std::{cmp::{max, min}, ops::Index};
 
 // public helper functions
 pub fn xy_idx(x: i32, y: i32) -> usize {
@@ -153,13 +153,13 @@ impl MapIndexingSystem {
 
 // map generation functions
 impl Map {
-    pub fn default() -> (Map, Position, Vec<Position>) {
+    pub fn default() -> (Map, Position, Vec<Position>, Vec<Position>) {
         //defaut generation creates a map with lots of coordiors but few rooms
         let mapgen = MapGenerator::default();
         Map::new_map_roomsandcorridors(mapgen)
     }
 
-    pub fn random() -> (Map, Position, Vec<Position>) {
+    pub fn random() -> (Map, Position, Vec<Position>, Vec<Position>) {
         let mut mapgen = MapGenerator::default();
         let map_type = mapgen.rng.0.roll_dice(1, 2);
         let map = match map_type {
@@ -169,7 +169,7 @@ impl Map {
         return map;
     }
 
-    pub fn new_map_roomsandcorridors(mut mapgen: MapGenerator) -> (Map, Position, Vec<Position>) {
+    pub fn new_map_roomsandcorridors(mut mapgen: MapGenerator) -> (Map, Position, Vec<Position>, Vec<Position>) {
         // const to describe size and number of rooms in this map generation algorithm // TODO : Set these to parameters or a default impl?
         // const MAX_ROOMS: i32 = 0;
         // const MIN_SIZE: i32 = 6;
@@ -265,11 +265,47 @@ impl Map {
             y: map.rooms[0].center().y,
         };
 
+        // decide the number of items
+        let mut num_items = mapgen
+            .rng
+            .0
+            .range(mapgen.items_range.0, mapgen.items_range.1 + 1);
+
+        // initialize item positions vector
+        let mut item_start_pos = Vec::<Position>::new();
+
+        // get set of tiles where there is not a wall
+        let available_tiles = map
+            .tiles
+            .iter()
+            .filter(|t| t.tile != TileType::Wall)
+            .map(|t| &t.location)
+            .collect::<Vec<&Position>>();
+        
+        // add items to random position in avialable tiles until number ofitems have been added
+        while num_items > 0 {
+            //let position = available_tiles[mapgen.rng.0.range(0, available_tiles.len())].clone();
+            let tile = available_tiles[mapgen.rng.0.range(0, available_tiles.len())];
+            let position = Position {
+                x: tile.x,
+                y: tile.y,
+            };
+
+            // if the random position is not the player's start position, then add
+            // TODO : should just remove the player start position from the avialable tiles
+            // TODO : should just remove the mob start position from the available tiles
+            if position != player_start_pos && !mob_start_pos.contains(&position){ 
+                 // remove the available tile now that it has an item on it
+                item_start_pos.push(position);
+                num_items -= 1;
+            }            
+        }
+
         // return map and player start position
-        (map, player_start_pos, mob_start_pos)
+        (map, player_start_pos, mob_start_pos, item_start_pos)
     }
 
-    pub fn new_map_cellularautomata(mut mapgen: MapGenerator) -> (Map, Position, Vec<Position>) {
+    pub fn new_map_cellularautomata(mut mapgen: MapGenerator) -> (Map, Position, Vec<Position>, Vec<Position>) {
         let mut map = Map {
             rooms: Vec::new(),
             blocked_tiles: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
@@ -329,6 +365,13 @@ impl Map {
             .0
             .range(mapgen.mobs_range.0, mapgen.mobs_range.1 + 1);
 
+
+        // decide the number of items
+        let mut num_items = mapgen
+            .rng
+            .0
+            .range(mapgen.items_range.0, mapgen.items_range.1 + 1);
+
         // get set of tiles where a mob can be spawned
         let available_tiles = map
             .tiles
@@ -337,7 +380,7 @@ impl Map {
             .map(|t| &t.location)
             .collect::<Vec<&Position>>();
 
-        println!("available_tiles: {:#?}", available_tiles.len());
+        // println!("available_tiles: {:#?}", available_tiles.len());
 
         // initialize npc positions vector
         let mut mob_start_pos = Vec::<Position>::new();
@@ -357,18 +400,30 @@ impl Map {
                 num_mobs -= 1;
             }
         }
-        println!("mob_start_pos: {:#?}", mob_start_pos);
+        // println!("mob_start_pos: {:#?}", mob_start_pos);
 
-        // let mut mob_start_pos = Vec::<Position>::new();
-        // for i in 1..map.rooms.len() {
-        //     let position = Position {
-        //         x: map.rooms[i].center().x,
-        //         y: map.rooms[i].center().y,
-        //     };
-        //     mob_start_pos.push(position);
-        // };
+        // initialize item positions vector
+        let mut item_start_pos = Vec::<Position>::new();
+        // add items to random position in avialable tiles until number ofitems have been added
+        while num_items > 0 {
+            //let position = available_tiles[mapgen.rng.0.range(0, available_tiles.len())].clone();
+            let tile = available_tiles[mapgen.rng.0.range(0, available_tiles.len())];
+            let position = Position {
+                x: tile.x,
+                y: tile.y,
+            };
 
-        (map, player_start_pos, mob_start_pos)
+            // if the random position is not the player's start position, then add
+            // TODO : should just remove the player start position from the avialable tiles
+            // TODO : should just remove the mob start position from the available tiles
+            if position != player_start_pos && !mob_start_pos.contains(&position){ 
+                 // remove the available tile now that it has an item on it
+                item_start_pos.push(position);
+                num_items -= 1;
+            }            
+        }
+
+        (map, player_start_pos, mob_start_pos, item_start_pos)
     }
 }
 

@@ -74,7 +74,7 @@ fn setup(mut commands: Commands) {
 
     //let map = Map::default();
     //let nmap = MapGenerator::new();
-    let (map, player_start_position, mob_start_positions) = Map::random();
+    let (map, player_start_position, mob_start_positions, item_start_positions) = Map::random();
     //let (map, player_start_position) = Map::new_map_cellularautomata(MapGenerator::new());
 
     // TODO: move player and npc spawn into map generation
@@ -86,13 +86,9 @@ fn setup(mut commands: Commands) {
         .iter()
         .for_each(|pos| spawner::spawn_random_mob(&mut commands, pos.clone(), &mut myrng));
 
-    // for i in 1..map.rooms.len() {
-    //     let position = Position {
-    //         x: map.rooms[i].center().x,
-    //         y: map.rooms[i].center().y,
-    //     };
-    //     spawner::spawn_random_mob(&mut commands, position, &mut myrng);
-    // }
+    // spawn item bundle
+    item_start_positions.iter().for_each(|pos| spawner::spawn_random_item(&mut commands, pos.clone()));
+
     commands.spawn(map);
     commands.spawn(myrng);
 }

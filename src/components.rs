@@ -130,10 +130,7 @@ pub struct CombatAttack {
 
 #[derive(Component, Debug)]
 pub struct Item {
-    pub name: Name,
-    //pub item_type: ItemType,
-    pub renderable: Renderable,
-    pub position: Option<Position>,
+    pub name: Name
 }
 
 // #[derive(Debug)]
@@ -151,6 +148,11 @@ pub struct Armor;
 
 #[derive(Component, Debug)]
 pub struct Consumable;
+
+#[derive(Component, Debug)]
+pub struct HealthPotion {
+    pub heal_amount: i32
+}
 
 #[derive(Component, Clone)]
 pub struct RNG(pub RandomNumberGenerator);
