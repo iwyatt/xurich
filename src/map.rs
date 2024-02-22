@@ -1,5 +1,8 @@
 pub use crate::prelude::*;
-use std::{cmp::{max, min}, ops::Index};
+use std::{
+    cmp::{max, min},
+    ops::Index,
+};
 
 // public helper functions
 pub fn xy_idx(x: i32, y: i32) -> usize {
@@ -169,7 +172,9 @@ impl Map {
         return map;
     }
 
-    pub fn new_map_roomsandcorridors(mut mapgen: MapGenerator) -> (Map, Position, Vec<Position>, Vec<Position>) {
+    pub fn new_map_roomsandcorridors(
+        mut mapgen: MapGenerator,
+    ) -> (Map, Position, Vec<Position>, Vec<Position>) {
         // const to describe size and number of rooms in this map generation algorithm // TODO : Set these to parameters or a default impl?
         // const MAX_ROOMS: i32 = 0;
         // const MIN_SIZE: i32 = 6;
@@ -281,7 +286,7 @@ impl Map {
             .filter(|t| t.tile != TileType::Wall)
             .map(|t| &t.location)
             .collect::<Vec<&Position>>();
-        
+
         // add items to random position in avialable tiles until number ofitems have been added
         while num_items > 0 {
             //let position = available_tiles[mapgen.rng.0.range(0, available_tiles.len())].clone();
@@ -294,18 +299,20 @@ impl Map {
             // if the random position is not the player's start position, then add
             // TODO : should just remove the player start position from the avialable tiles
             // TODO : should just remove the mob start position from the available tiles
-            if position != player_start_pos && !mob_start_pos.contains(&position){ 
-                 // remove the available tile now that it has an item on it
+            if position != player_start_pos && !mob_start_pos.contains(&position) {
+                // remove the available tile now that it has an item on it
                 item_start_pos.push(position);
                 num_items -= 1;
-            }            
+            }
         }
 
         // return map and player start position
         (map, player_start_pos, mob_start_pos, item_start_pos)
     }
 
-    pub fn new_map_cellularautomata(mut mapgen: MapGenerator) -> (Map, Position, Vec<Position>, Vec<Position>) {
+    pub fn new_map_cellularautomata(
+        mut mapgen: MapGenerator,
+    ) -> (Map, Position, Vec<Position>, Vec<Position>) {
         let mut map = Map {
             rooms: Vec::new(),
             blocked_tiles: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
@@ -365,7 +372,6 @@ impl Map {
             .0
             .range(mapgen.mobs_range.0, mapgen.mobs_range.1 + 1);
 
-
         // decide the number of items
         let mut num_items = mapgen
             .rng
@@ -416,11 +422,11 @@ impl Map {
             // if the random position is not the player's start position, then add
             // TODO : should just remove the player start position from the avialable tiles
             // TODO : should just remove the mob start position from the available tiles
-            if position != player_start_pos && !mob_start_pos.contains(&position){ 
-                 // remove the available tile now that it has an item on it
+            if position != player_start_pos && !mob_start_pos.contains(&position) {
+                // remove the available tile now that it has an item on it
                 item_start_pos.push(position);
                 num_items -= 1;
-            }            
+            }
         }
 
         (map, player_start_pos, mob_start_pos, item_start_pos)

@@ -11,6 +11,8 @@ pub fn tick(
     query_maps: Query<&Map>,
     //query_camera: Query<(&Camera, &GlobalTransform), With<GameTerminal>>,
     query_camera: Query<&TiledCamera>,
+    query_player_inventory: Query<(&Inventory, &Children), With<Player>>,
+    query_player_inventory_items: Query<&crate::components::Name, With<Item>>,
     //query_camera: Query<(&Camera2d, &GlobalTransform), With<GameTerminal>>,
 
     //per https://docs.rs/bevy_ascii_terminal/latest/src/bevy_ascii_terminal/renderer/camera.rs.html#56
@@ -70,13 +72,6 @@ pub fn tick(
         }
     });
 
-    //render player and npcs
-    query_entities.iter().for_each(|(pos, rend, _)| {
-        if visible_tiles.contains(&Point::new(pos.x, pos.y)) {
-            terminal.put_char([pos.x, pos.y], rend.glyph.fg(rend.fg).bg(rend.bg))
-        }
-    });
-
     // render player stat bar
     let player_combat_stats = query_combat_stats.single();
     let line = [
@@ -88,6 +83,16 @@ pub fn tick(
     ]
     .join(" ");
     terminal.put_string([0, MAP_HEIGHT + 1], line.fg(Color::WHITE));
+
+    // render player inventory
+    if let Ok(pinventory) = query_player_inventory.get_single() {
+        pinventory.1.iter().for_each(|c| {
+            if let Ok(i) = query_player_inventory_items.get(*c) {
+                let line = i.0.to_string();
+                terminal.put_string([13, MAP_HEIGHT + 1], line.fg(Color::WHITE));
+            }
+        });
+    }
 
     // render toolips
     let camera = query_camera.single();
@@ -136,6 +141,13 @@ pub fn tick(
                     e.2 .0.clone().fg(Color::WHITE),
                 )
             });
+
+        //render player and npcs
+        query_entities.iter().for_each(|(pos, rend, _)| {
+            if visible_tiles.contains(&Point::new(pos.x, pos.y)) {
+                terminal.put_char([pos.x, pos.y], rend.glyph.fg(rend.fg).bg(rend.bg))
+            }
+        });
     }
 }
 

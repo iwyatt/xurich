@@ -1,6 +1,26 @@
 use crate::components;
 pub use crate::prelude::*;
 
+pub fn player_get_item(
+    input: Res<Input<KeyCode>>,
+    mut ev_itempickup: EventWriter<EV_ItemPickUp>,
+    query_entity: Query<(Entity, &Position, With<Player>)>,
+) {
+    if !input.just_pressed(KeyCode::G) {
+        return;
+    };
+    let (entity, position, _) = query_entity.single();
+    let item_pickup: EV_ItemPickUp = EV_ItemPickUp {
+        target: entity,
+        position: Position {
+            x: position.x,
+            y: position.y,
+        },
+    };
+    //println!("player_itempickup: {:#?}", &item_pickup);
+    ev_itempickup.send(item_pickup);
+}
+
 pub fn player_walk(
     input: Res<Input<KeyCode>>,
     mut ev_combat: EventWriter<CombatAttack>,
@@ -12,13 +32,14 @@ pub fn player_walk(
     mut query_viewshed: Query<&mut Viewshed>,
     mut query_game_state: Query<&mut components::GameState>,
 ) {
+    // if using turn to move
     let map = query_map.iter().nth(0).unwrap();
     let move_input = read_movement(input);
     if move_input.cmpeq(IVec2::ZERO).all() {
         return;
     }
 
-    let (entity, player) = player_pos //rename player_pos to another variable
+    let (entity, _) = player_pos //rename player_pos to another variable
         .iter_mut()
         .nth(0)
         .map(|(entity, player)| (entity, player))
@@ -96,6 +117,7 @@ pub fn player_walk(
 fn read_movement(input: Res<Input<KeyCode>>) -> IVec2 {
     let mut p = IVec2::ZERO;
 
+    // move in cardinal directions, attack if moving into hostile actor's space
     if input.just_pressed(KeyCode::Numpad1) || input.just_pressed(KeyCode::Z) {
         p.x = -1;
         p.y = -1;

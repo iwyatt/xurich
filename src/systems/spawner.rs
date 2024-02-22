@@ -27,33 +27,59 @@ pub fn spawn_random_mob(mut commands: &mut Commands, position: Position, mut rng
 }
 
 pub fn spawn_player(mut commands: &mut Commands, position: Position) {
-    commands.spawn(PlayerBundle {
-        position: position,
-        ..Default::default()
-    });
+    commands
+        .spawn(PlayerBundle {
+            position: position,
+            ..Default::default()
+        })
+        .insert(Inventory);
 }
 
 pub fn spawn_random_item(commands: &mut Commands, position: Position) {
     let mut rng = RNG(RandomNumberGenerator::seeded(RNG_SEED));
-    let (name, renderable, item) = match rng.0.roll_dice(1,2) {
+    let (name, renderable, item) = match rng.0.roll_dice(1, 3) {
         1 => {
             let name = Name(String::from("Small Health Potion"));
-            let renderable = Renderable {glyph: 'Φ', fg: Color::MAROON, bg: Color::BLACK};
-            let item = HealthPotion{heal_amount: 10};
+            let renderable = Renderable {
+                glyph: 'Φ',
+                fg: Color::MAROON,
+                bg: Color::BLACK,
+            };
+            let item = HealthPotion { heal_amount: 5 };
             (name, renderable, item)
-        },
+        }
         2 => {
             let name = Name(String::from("Health Potion"));
-            let renderable = Renderable {glyph: 'Φ', fg: Color::CRIMSON, bg: Color::BLACK};
-            let item = HealthPotion{heal_amount: 20};
+            let renderable = Renderable {
+                glyph: 'Φ',
+                fg: Color::CRIMSON,
+                bg: Color::BLACK,
+            };
+            let item = HealthPotion { heal_amount: 10 };
+            (name, renderable, item)
+        }
+        3 => {
+            let name = Name(String::from("Big Health Potion"));
+            let renderable = Renderable {
+                glyph: 'Φ',
+                fg: Color::RED,
+                bg: Color::BLACK,
+            };
+            let item = HealthPotion { heal_amount: 15 };
             (name, renderable, item)
         }
         _ => {
             let name = Name(String::from("Health Potion"));
-            let renderable = Renderable {glyph: 'Φ', fg: Color::CRIMSON, bg: Color::BLACK};
-            let item = HealthPotion{heal_amount: 20};
+            let renderable = Renderable {
+                glyph: 'Φ',
+                fg: Color::CRIMSON,
+                bg: Color::BLACK,
+            };
+            let item = HealthPotion { heal_amount: 20 };
             (name, renderable, item)
-        }        
+        }
     };
-    commands.spawn((name, renderable, item, position));
+    commands
+        .spawn((name, renderable, item, position))
+        .insert(Item);
 }

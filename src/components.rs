@@ -107,6 +107,7 @@ pub struct CombatStats {
     pub power: i32,
 }
 
+// event struct
 #[derive(Component, Debug, Event)]
 pub struct CombatAttack {
     pub source: Entity,
@@ -129,9 +130,7 @@ pub struct CombatAttack {
 // }
 
 #[derive(Component, Debug)]
-pub struct Item {
-    pub name: Name
-}
+pub struct Item;
 
 // #[derive(Debug)]
 // pub enum ItemType {
@@ -151,8 +150,18 @@ pub struct Consumable;
 
 #[derive(Component, Debug)]
 pub struct HealthPotion {
-    pub heal_amount: i32
+    pub heal_amount: i32,
 }
+
+#[derive(Component, Debug)]
+pub struct Inventory;
 
 #[derive(Component, Clone)]
 pub struct RNG(pub RandomNumberGenerator);
+
+// event struct
+#[derive(Component, Debug, Event)]
+pub struct EV_ItemPickUp {
+    pub target: Entity,
+    pub position: Position,
+}

@@ -1,5 +1,6 @@
 // TODO: This use / mod loading needs to be reviewed and cleaned up
 mod components;
+mod events;
 mod gui;
 mod map;
 mod npc;
@@ -18,14 +19,19 @@ mod prelude {
     pub use bevy_ascii_terminal::prelude::*;
     pub use rltk::*;
 }
-use crate::systems::combat::resolve_combat_events;
+use crate::events::combat::resolve_combat_events;
+use crate::events::inventory::ev_pickup_item;
+
 use crate::systems::npc_ai::run_npc_ai;
+use crate::systems::player_input::player_get_item;
 use crate::systems::player_input::player_walk;
 use crate::systems::rendering::*;
+use systems::spawner;
+
 use crate::viewsheds::get_visible_tiles;
 use crate::viewsheds::update_viewsheds;
+
 use prelude::*;
-use systems::spawner;
 
 fn main() {
     App::new()
@@ -35,6 +41,8 @@ fn main() {
             Update,
             (
                 MapIndexingSystem::run,
+                player_get_item,
+                ev_pickup_item,
                 player_walk,
                 get_visible_tiles,
                 update_viewsheds,
@@ -47,6 +55,7 @@ fn main() {
                 .chain(),
         )
         .add_event::<CombatAttack>()
+        .add_event::<EV_ItemPickUp>()
         //.add_systems(Update, tick)
         .run();
 }
@@ -87,7 +96,9 @@ fn setup(mut commands: Commands) {
         .for_each(|pos| spawner::spawn_random_mob(&mut commands, pos.clone(), &mut myrng));
 
     // spawn item bundle
-    item_start_positions.iter().for_each(|pos| spawner::spawn_random_item(&mut commands, pos.clone()));
+    item_start_positions
+        .iter()
+        .for_each(|pos| spawner::spawn_random_item(&mut commands, pos.clone()));
 
     commands.spawn(map);
     commands.spawn(myrng);
