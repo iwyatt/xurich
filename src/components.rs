@@ -165,3 +165,10 @@ pub struct EV_ItemPickUp {
     pub target: Entity,
     pub position: Position,
 }
+
+// event struct
+#[derive(Component, Debug, Event)]
+pub struct EV_ItemUse {
+    pub source: Entity,
+    pub item: Entity,
+}

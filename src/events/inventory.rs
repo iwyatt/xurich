@@ -40,3 +40,32 @@ pub fn ev_pickup_item(
         commands.entity(item_entity).remove::<Position>();
     }
 }
+
+pub fn ev_use_item(
+    mut commands: Commands,
+    mut ev_use_item: EventReader<EV_ItemUse>,
+    query_items: Query<(Entity, Option<&HealthPotion>), With<Item>>,
+    mut query_combat_stats: Query<(Entity, &mut CombatStats)>,
+) {
+    for event in ev_use_item.read() {
+        let potion = query_items
+            .iter()
+            .filter(|(e, _)| *e == event.item)
+            .map(|(_, p)| p)
+            .nth(0)
+            .unwrap();
+
+        // do something with the potion
+        if let Some(potion) = potion {
+            let mut stats = query_combat_stats
+                .iter_mut()
+                .filter(|(e, _)| event.source == *e)
+                .map(|(_, c)| c)
+                .nth(0)
+                .unwrap();
+            stats.hp = stats.max_hp.min(stats.hp + potion.heal_amount);
+        }
+
+        // TODO : remove potion from inventory
+    }
+}

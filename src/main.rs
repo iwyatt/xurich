@@ -21,9 +21,11 @@ mod prelude {
 }
 use crate::events::combat::resolve_combat_events;
 use crate::events::inventory::ev_pickup_item;
+use crate::events::inventory::ev_use_item;
 
 use crate::systems::npc_ai::run_npc_ai;
 use crate::systems::player_input::player_get_item;
+use crate::systems::player_input::player_use_item;
 use crate::systems::player_input::player_walk;
 use crate::systems::rendering::*;
 use systems::spawner;
@@ -42,7 +44,9 @@ fn main() {
             (
                 MapIndexingSystem::run,
                 player_get_item,
+                player_use_item,
                 ev_pickup_item,
+                ev_use_item,
                 player_walk,
                 get_visible_tiles,
                 update_viewsheds,
@@ -56,6 +60,7 @@ fn main() {
         )
         .add_event::<CombatAttack>()
         .add_event::<EV_ItemPickUp>()
+        .add_event::<EV_ItemUse>()
         //.add_systems(Update, tick)
         .run();
 }

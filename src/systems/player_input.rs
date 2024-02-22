@@ -1,5 +1,8 @@
-use crate::components;
 pub use crate::prelude::*;
+use crate::{components, events::inventory::ev_use_item};
+
+// TODO : Refactor so that keyboard input capture is just one function
+//  and flows the program to other functions as appropriate
 
 pub fn player_get_item(
     input: Res<Input<KeyCode>>,
@@ -19,6 +22,34 @@ pub fn player_get_item(
     };
     //println!("player_itempickup: {:#?}", &item_pickup);
     ev_itempickup.send(item_pickup);
+}
+
+pub fn player_use_item(
+    input: Res<Input<KeyCode>>,
+    mut ev_itemuse: EventWriter<EV_ItemUse>,
+    query_inventory: Query<(Entity, &Inventory, &Children), With<Player>>,
+    query_items: Query<&crate::components::Name>,
+) {
+    if !input.just_pressed(KeyCode::U) {
+        return;
+    };
+    //println!("!input.just_pressed(KeyCode::U");
+
+    // get the 1st item in the inventory player inventory
+    if let Ok(pinventory) = query_inventory.get_single() {
+        pinventory.2.iter().for_each(|c| {
+            //println!("pinventory.2.iter().for_each(|c {:#?}", pinventory.2);
+
+            if let Ok(i) = query_items.get(*c) {
+                println!("item: {:#?}", i);
+                let item_use = EV_ItemUse {
+                    source: pinventory.0,
+                    item: *c,
+                };
+                ev_itemuse.send(item_use);
+            }
+        });
+    }
 }
 
 pub fn player_walk(
