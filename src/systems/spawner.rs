@@ -37,7 +37,7 @@ pub fn spawn_player(mut commands: &mut Commands, position: Position) {
 
 pub fn spawn_random_item(commands: &mut Commands, position: Position) {
     let mut rng = RNG(RandomNumberGenerator::seeded(RNG_SEED));
-    let (name, renderable, item) = match rng.0.roll_dice(1, 3) {
+    let (name, renderable, item) = match rng.0.roll_dice(1, 6) {
         1 => {
             let name = Name(String::from("Small Health Potion"));
             let renderable = Renderable {
@@ -48,7 +48,7 @@ pub fn spawn_random_item(commands: &mut Commands, position: Position) {
             let item = HealthPotion { heal_amount: 5 };
             (name, renderable, item)
         }
-        2 => {
+        2 | 3 => {
             let name = Name(String::from("Health Potion"));
             let renderable = Renderable {
                 glyph: 'Φ',
@@ -58,7 +58,7 @@ pub fn spawn_random_item(commands: &mut Commands, position: Position) {
             let item = HealthPotion { heal_amount: 10 };
             (name, renderable, item)
         }
-        3 => {
+        4 => {
             let name = Name(String::from("Big Health Potion"));
             let renderable = Renderable {
                 glyph: 'Φ',
@@ -69,13 +69,13 @@ pub fn spawn_random_item(commands: &mut Commands, position: Position) {
             (name, renderable, item)
         }
         _ => {
-            let name = Name(String::from("Health Potion"));
+            let name = Name(String::from("Small Health Potion"));
             let renderable = Renderable {
                 glyph: 'Φ',
-                fg: Color::CRIMSON,
+                fg: Color::MAROON,
                 bg: Color::BLACK,
             };
-            let item = HealthPotion { heal_amount: 20 };
+            let item = HealthPotion { heal_amount: 5 };
             (name, renderable, item)
         }
     };

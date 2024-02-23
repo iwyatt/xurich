@@ -4,8 +4,6 @@ pub fn ev_pickup_item(
     mut commands: Commands,
     query_inventory: Query<(Entity, &Inventory)>,
     query_items: Query<(Entity, &Position), With<Item>>,
-    //mut query_entity_items: Query<(Entity, (With<Position>, With<Item>))>,
-    //query_items: Query<(&Item, &Position)>,
     mut ev_pickup_item: EventReader<EV_ItemPickUp>,
 ) {
     for e in ev_pickup_item.read() {
@@ -27,14 +25,8 @@ pub fn ev_pickup_item(
             .nth(0)
             .unwrap();
 
-        // add item to target's inventory...
-        // ... but first, manually Copy() the item from a reference to create a new item
-        // TODO : Figure out a better way!
-        // let new_item: Item = Item {
-        //     name: Name(item.name.0.to_string()),
-        // };
+        // add item as child to inventory component
         commands.entity(inventory_entity).add_child(item_entity);
-        //inventory.items.push(new_item); // TODO : change this so that only a single item is retrieved at a time
         println!("inventory.items.push(new_item): {:#?}", inventory_entity);
         //  remove item position as it is now only within the character's inventory and not on the map
         commands.entity(item_entity).remove::<Position>();
@@ -48,14 +40,15 @@ pub fn ev_use_item(
     mut query_combat_stats: Query<(Entity, &mut CombatStats)>,
 ) {
     for event in ev_use_item.read() {
-        let potion = query_items
+        let (entity, potion) = query_items
             .iter()
             .filter(|(e, _)| *e == event.item)
-            .map(|(_, p)| p)
+            .map(|(e, p)| (e, p))
             .nth(0)
             .unwrap();
 
-        // do something with the potion
+        // do something with the item
+        // potion
         if let Some(potion) = potion {
             let mut stats = query_combat_stats
                 .iter_mut()
@@ -64,8 +57,9 @@ pub fn ev_use_item(
                 .nth(0)
                 .unwrap();
             stats.hp = stats.max_hp.min(stats.hp + potion.heal_amount);
-        }
 
-        // TODO : remove potion from inventory
+            // remove potion from inventory
+            commands.entity(entity).despawn();
+        }
     }
 }

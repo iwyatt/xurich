@@ -30,18 +30,22 @@ pub fn player_use_item(
     query_inventory: Query<(Entity, &Inventory, &Children), With<Player>>,
     query_items: Query<&crate::components::Name>,
 ) {
-    if !input.just_pressed(KeyCode::U) {
+    //println!("input: {:#?}", input);
+    if !input.just_pressed(KeyCode::Key1)
+        && !input.just_pressed(KeyCode::Key2)
+        && !input.just_pressed(KeyCode::Key3)
+    {
         return;
     };
-    //println!("!input.just_pressed(KeyCode::U");
+    println!("input: {:#?}", input);
 
     // get the 1st item in the inventory player inventory
+    // TODO: get and use the item corresponding to the keycode event above
     if let Ok(pinventory) = query_inventory.get_single() {
         pinventory.2.iter().for_each(|c| {
             //println!("pinventory.2.iter().for_each(|c {:#?}", pinventory.2);
-
             if let Ok(i) = query_items.get(*c) {
-                println!("item: {:#?}", i);
+                //println!("item: {:#?}", i);
                 let item_use = EV_ItemUse {
                     source: pinventory.0,
                     item: *c,
