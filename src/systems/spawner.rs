@@ -1,5 +1,4 @@
 pub use crate::prelude::*;
-use bevy_ascii_terminal::*;
 
 pub fn spawn_random_mob(mut commands: &mut Commands, position: Position, mut rng: &mut RNG) {
     // let mut rng = query_rng.single_mut();
@@ -36,7 +35,9 @@ pub fn spawn_player(mut commands: &mut Commands, position: Position) {
 }
 
 pub fn spawn_random_item(commands: &mut Commands, position: Position) {
+    // TODO: replace this RNG line with getting the world RNG resource
     let mut rng = RNG(RandomNumberGenerator::seeded(RNG_SEED));
+
     let (name, renderable, item) = match rng.0.roll_dice(1, 6) {
         1 => {
             let name = Name(String::from("Small Health Potion"));

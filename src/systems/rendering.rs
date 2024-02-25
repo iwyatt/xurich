@@ -11,7 +11,7 @@ pub fn tick(
     query_maps: Query<&Map>,
     query_camera: Query<&TiledCamera>,
     query_player_inventory: Query<(&Inventory, &Children), With<Player>>,
-    query_player_inventory_items: Query<&crate::components::Name, With<Item>>,
+    query_player_inventory_items: Query<(&crate::components::Name, &Renderable), With<Item>>,
     mut query_player_viewshed: Query<&mut Viewshed, With<Player>>,
     query_windows: Query<&Window, With<PrimaryWindow>>,
 ) {
@@ -69,7 +69,11 @@ pub fn tick(
         "/",
         &player_combat_stats.max_hp.to_string(),
     ]
-    .join(" ");
+    .join("");
+
+    let hp_line_length = line.len();
+    // TODO: Set the HP color to match the player character glyph color
+    //  which should be red/yellow/green depending on hp threshold
     terminal.put_string([0, MAP_HEIGHT + 1], line.fg(Color::WHITE));
 
     // render player quick-inventory
@@ -83,11 +87,44 @@ pub fn tick(
             .for_each(|(quick_i, c)| {
                 if let Ok(i) = query_player_inventory_items.get(*c) {
                     //let line = String::from("(") + quick_i.to_string().as_str() + ") " + (&i.0.to_string());
-                    let line = format!("({}) {}", quick_i + 1, i.0);
                     terminal.put_string(
-                        [15 * (quick_i + 1) as i32, MAP_HEIGHT + 0],
-                        line.fg(Color::WHITE),
+                        [
+                            (hp_line_length as i32 + 1) + (quick_i as i32 * 4),
+                            MAP_HEIGHT + 1,
+                        ],
+                        "(".fg(Color::WHITE),
                     );
+
+                    terminal.put_string(
+                        [
+                            (hp_line_length as i32 + 1) + (quick_i as i32 * 4) + 1,
+                            MAP_HEIGHT + 1,
+                        ],
+                        (quick_i + 1).to_string().fg(Color::WHITE),
+                    );
+
+                    terminal.put_string(
+                        [
+                            (hp_line_length as i32 + 1) + (quick_i as i32 * 4) + 2,
+                            MAP_HEIGHT + 1,
+                        ],
+                        ")".fg(Color::WHITE),
+                    );
+
+                    terminal.put_string(
+                        [
+                            (hp_line_length as i32 + 1) + (quick_i as i32 * 4) + 3,
+                            MAP_HEIGHT + 1,
+                        ],
+                        i.1.glyph.to_string().fg(i.1.fg),
+                    );
+
+                    // og)
+                    // let line = format!("({}) {}", quick_i + 1, i.0.0);
+                    // terminal.put_string(
+                    //     [15 * (quick_i + 1) as i32, MAP_HEIGHT + 0],
+                    //     line.fg(Color::WHITE),
+                    // );
                 }
             });
     }
@@ -136,6 +173,7 @@ pub fn tick(
         //     .fg(Color::WHITE),
         // );
 
+        // TODO : modify this so that the player is always rendered on top
         query_entities
             .iter()
             .filter(|e| e.0.x == mouse_map_pos.0 && e.0.y == mouse_map_pos.1)
