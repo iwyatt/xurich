@@ -14,14 +14,14 @@ mod prelude {
     pub use crate::map::*;
     pub use crate::npc::*;
     pub use crate::systems::viewsheds;
-    pub use bevy_ascii_terminal::prelude::*;
     pub use bevy::prelude::*;
+    pub use bevy_ascii_terminal::prelude::*;
     //use rltk::*;
 }
-use rltk::*;
 use crate::events::combat::resolve_combat_events;
 use crate::events::inventory::ev_pickup_item;
 use crate::events::inventory::ev_use_item;
+use rltk::*;
 
 use crate::systems::npc_ai::run_npc_ai;
 use crate::systems::player_input::player_get_item;
@@ -80,7 +80,7 @@ fn setup(mut commands: Commands) {
 
     // define the terminal
     let term_size = [MAP_WIDTH, MAP_HEIGHT + 2]; // +2 for 2 lines of UI. Note this is 1-index, not 0-index unlike term.put_char
-    // TODO: BUG: I suspect that the above is causing an issue with NPC_AI.rs pathing when player is on bottom row of map
+                                                 // TODO: BUG: I suspect that the above is causing an issue with NPC_AI.rs pathing when player is on bottom row of map
     let terminal = Terminal::new(term_size).with_border(Border::single_line());
     let term_bundle = TerminalBundle::from(terminal);
 

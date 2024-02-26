@@ -94,7 +94,8 @@ pub fn run_npc_ai(
 
                 // if the next step would put the NPC on top of the player, do an attack instead
                 if path.success && path.steps.len() <= 2 {
-                    if true { // TODO : why do I need this true statement?!
+                    if true {
+                        // TODO : why do I need this true statement?!
                         {
                             //define the parameters of the combat attack
                             let combat_attack: CombatAttack = CombatAttack {
@@ -130,7 +131,6 @@ pub fn run_npc_ai(
                         .visible_tiles
                         .contains(&Point::new(player_position.x, player_position.y))
                     {
-
                         // println!(
                         //     "path_success: {:#?}; path.steps.len(): {:#?}",
                         //     path.success,

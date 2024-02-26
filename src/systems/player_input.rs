@@ -1,5 +1,5 @@
-pub use crate::prelude::*;
 use crate::components;
+pub use crate::prelude::*;
 
 // TODO : Refactor so that keyboard input capture is just one function
 //  and flows the program to other functions as appropriate

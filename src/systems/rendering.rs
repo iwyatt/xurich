@@ -1,8 +1,18 @@
 use crate::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy_ascii_terminal::*;
-use Terminal;
 use rltk::*;
+use Terminal;
+
+use super::player_input::GameState;
+
+// game over fn
+fn render_game_over(mut terminal: Mut<'_, bevy_ascii_terminal::Terminal>) {
+    terminal.put_string(
+        [MAP_WIDTH / 2, MAP_HEIGHT / 2],
+        "YOUR QUEST HAS ENDED".fg(Color::BLACK).bg(Color::WHITE),
+    );
+}
 
 // render update
 pub fn tick(
@@ -15,9 +25,15 @@ pub fn tick(
     query_player_inventory_items: Query<(&crate::components::Name, &Renderable), With<Item>>,
     mut query_player_viewshed: Query<&mut Viewshed, With<Player>>,
     query_windows: Query<&Window, With<PrimaryWindow>>,
+    query_gamestate: Query<&mut GameState>,
 ) {
-    let map = query_maps.iter().nth(0).unwrap();
     let mut terminal = query_terminal.iter_mut().nth(0).unwrap();
+
+    if query_gamestate.single().runstate == RunState::GameOver {
+        render_game_over(terminal);
+        return;
+    };
+    let map = query_maps.iter().nth(0).unwrap();
     let mut viewshed = query_player_viewshed.iter_mut().nth(0).unwrap();
 
     // stop rendering if the player's view shed isn't dirty.
@@ -34,7 +50,6 @@ pub fn tick(
 
     // clear the terminal screen
     terminal.clear();
-
     map.tiles.iter().for_each(|tile| {
         // render revealed tiles
         let idx = xy_idx(tile.location.x, tile.location.y);

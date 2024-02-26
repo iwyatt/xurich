@@ -92,6 +92,7 @@ pub struct GameState {
 pub enum RunState {
     Paused,
     Running,
+    GameOver,
 }
 
 #[derive(Component, Debug)]

@@ -334,7 +334,7 @@ impl Map {
             revealed_tiles: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
         };
 
-        // REFACTOR: dumb but works - set the position of each tile in the vector of map tiles to a different value
+        // TODO: REFACTOR: dumb but works - set the position of each tile in the vector of map tiles to a different value
         for x in 0..MAP_WIDTH {
             for y in 0..MAP_HEIGHT {
                 map.tiles[xy_idx(x, y)].location.x = x;
