@@ -1,7 +1,8 @@
-pub use crate::prelude::*;
+use crate::prelude::*;
+use rltk::*;
 use std::{
     cmp::{max, min},
-    ops::Index,
+    //ops::Index,
 };
 
 // public helper functions
@@ -76,10 +77,10 @@ impl Default for MapGenerator {
 
 pub enum MapGenerationAlgo {
     RoomsAndCorridors,
-    CellularAutomata,
-    HiveMap,
-    DrunkardsWalk,
-    MazesAndLabyrinths,
+    // CellularAutomata,
+    // HiveMap,
+    // DrunkardsWalk,
+    // MazesAndLabyrinths,
 }
 
 impl Algorithm2D for Map {
@@ -104,7 +105,7 @@ impl BaseMap for Map {
         let mut exits = rltk::SmallVec::new();
         let x = idx as i32 % self.width;
         let y = idx as i32 / self.width;
-        let w = self.width as usize;
+        //let w = self.width as usize;
         // let (_, _) = idx_xy(idx); // DEBUG ONLY: remove
         //                           // Cardinal directions
         if self.is_exit_valid(x, y + 1) {
@@ -482,7 +483,7 @@ fn apply_vertical_tunnel(map: &mut Map, y1: i32, y2: i32, x: i32) {
 impl Map {
     pub fn populate_blocked_tiles(&mut self) {
         for (i, tile) in self.tiles.iter_mut().enumerate() {
-            self.blocked_tiles[i] = (tile.tile == TileType::Wall);
+            self.blocked_tiles[i] = tile.tile == TileType::Wall;
         }
     }
 

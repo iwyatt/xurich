@@ -1,10 +1,11 @@
-pub use crate::prelude::*;
+use crate::prelude::*;
+use rltk::*;
 
 #[derive(Component)]
 pub struct GameTerminal;
 
-#[derive(Component)]
-pub struct UI_Terminal;
+// #[derive(Component)]
+// pub struct UI_Terminal;
 
 // Actors - players, NPCs (enemies and friendly), interactables
 #[derive(Component, Debug)]

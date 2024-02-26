@@ -1,7 +1,8 @@
-pub use crate::prelude::*;
+use crate::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy_ascii_terminal::*;
 use Terminal;
+use rltk::*;
 
 // render update
 pub fn tick(

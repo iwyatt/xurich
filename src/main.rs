@@ -1,7 +1,6 @@
 // TODO: This use / mod loading needs to be reviewed and cleaned up
 mod components;
 mod events;
-mod gui;
 mod map;
 mod npc;
 mod systems;
@@ -15,10 +14,11 @@ mod prelude {
     pub use crate::map::*;
     pub use crate::npc::*;
     pub use crate::systems::viewsheds;
-    pub use bevy::prelude::*;
     pub use bevy_ascii_terminal::prelude::*;
-    pub use rltk::*;
+    pub use bevy::prelude::*;
+    //use rltk::*;
 }
+use rltk::*;
 use crate::events::combat::resolve_combat_events;
 use crate::events::inventory::ev_pickup_item;
 use crate::events::inventory::ev_use_item;
@@ -26,6 +26,7 @@ use crate::events::inventory::ev_use_item;
 use crate::systems::npc_ai::run_npc_ai;
 use crate::systems::player_input::player_get_item;
 use crate::systems::player_input::player_use_item;
+use crate::systems::player_input::player_wait;
 use crate::systems::player_input::player_walk;
 use crate::systems::rendering::*;
 use systems::spawner;
@@ -48,6 +49,7 @@ fn main() {
                 ev_pickup_item,
                 ev_use_item,
                 player_walk,
+                player_wait,
                 get_visible_tiles,
                 update_viewsheds,
                 run_npc_ai,
@@ -78,6 +80,7 @@ fn setup(mut commands: Commands) {
 
     // define the terminal
     let term_size = [MAP_WIDTH, MAP_HEIGHT + 2]; // +2 for 2 lines of UI. Note this is 1-index, not 0-index unlike term.put_char
+    // TODO: BUG: I suspect that the above is causing an issue with NPC_AI.rs pathing when player is on bottom row of map
     let terminal = Terminal::new(term_size).with_border(Border::single_line());
     let term_bundle = TerminalBundle::from(terminal);
 
@@ -86,10 +89,7 @@ fn setup(mut commands: Commands) {
         .spawn((term_bundle, AutoCamera))
         .insert(GameTerminal);
 
-    //let map = Map::default();
-    //let nmap = MapGenerator::new();
     let (map, player_start_position, mob_start_positions, item_start_positions) = Map::random();
-    //let (map, player_start_position) = Map::new_map_cellularautomata(MapGenerator::new());
 
     // TODO: move player and npc spawn into map generation
     // spawn player on map

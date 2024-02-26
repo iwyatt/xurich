@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use rltk::*;
 
 //impl Viewshed {}
 pub fn get_visible_tiles(
@@ -21,7 +22,7 @@ pub fn update_viewsheds(
     mut query_viewsheds: Query<(&Position, &mut Viewshed)>,
     mut query_map: Query<&mut Map>,
 ) {
-    let mut map = query_map.iter_mut().nth(0).unwrap();
+    let map = query_map.iter_mut().nth(0).unwrap();
     query_viewsheds.iter_mut().for_each(|(p, mut v)| {
         let mut visible_tiles = field_of_view(Point::new(p.x, p.y), v.range, &*map);
         visible_tiles.retain(|p| p.x >= 0 && p.x < map.width && p.y >= 0 && p.y < map.height);

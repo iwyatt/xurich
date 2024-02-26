@@ -1,6 +1,6 @@
 // load crate prelude
-use crate::components;
-pub use crate::prelude::*;
+//use crate::components;
+use crate::prelude::*;
 
 #[derive(Bundle)]
 pub struct NPCBundle {

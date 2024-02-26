@@ -1,8 +1,20 @@
 pub use crate::prelude::*;
-use crate::{components, events::inventory::ev_use_item};
+use crate::components;
 
 // TODO : Refactor so that keyboard input capture is just one function
 //  and flows the program to other functions as appropriate
+
+pub fn player_wait(
+    input: Res<Input<KeyCode>>,
+    mut query_game_state: Query<&mut components::GameState>,
+) {
+    if !input.just_pressed(KeyCode::S) {
+        return;
+    };
+    // end of player's turn: switch game state so NPCs can take their turn
+    let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
+    game_state.runstate = RunState::Running;
+}
 
 pub fn player_get_item(
     input: Res<Input<KeyCode>>,
@@ -61,7 +73,7 @@ pub fn player_use_item(
             .for_each(|(_, c)| {
                 //println!("pinventory.2.iter().for_each(|c {:#?}", pinventory.2);
 
-                if let Ok(i) = query_items.get(*c) {
+                if let Ok(_) = query_items.get(*c) {
                     // println!("item: {:#?}", i);
                     let item_use = EV_ItemUse {
                         source: pinventory.0,

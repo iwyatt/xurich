@@ -1,11 +1,10 @@
-use std::borrow::Borrow;
-
 use crate::components;
-pub use crate::prelude::*;
+use crate::prelude::*;
+use rltk::*;
 
 // impl NPC_AI {}
 pub fn run_npc_ai(
-    mut commands: Commands,
+    //mut commands: Commands,
     mut ev_combat: EventWriter<CombatAttack>,
     mut paramset: ParamSet<(
         Query<(Entity, &mut Position, &mut Viewshed, &mut NPC_AI), With<Enemy>>,
@@ -40,7 +39,7 @@ pub fn run_npc_ai(
     paramset.p0().iter_mut().for_each(|enemy| {
         //for each enemy process according to state and distance to player
         // TODO: Add support for different AI scripts eg ranged damage dealers
-        let (entity, mut pos, mut view, mut ai) = enemy;
+        let (_, mut pos, mut view, mut ai) = enemy;
         //println!("ai.state: {:#?}", ai.state);
         match ai.state {
             NPC_AI_State::Inactive => {
@@ -66,25 +65,23 @@ pub fn run_npc_ai(
                 return;
             }
             NPC_AI_State::Active => {
+                // debug
                 // get distance to player in order to inform what action monster takes
                 // let distance_to_player = rltk::DistanceAlg::Pythagoras.distance2d(
                 //     Point::new(player.1.x, player.1.y),
                 //     Point::new(pos.x, pos.y),
                 // );
-                //println!("distance_to_player: {:#?}", distance_to_player);
+                // println!("distance_to_player: {:#?}", distance_to_player);
 
                 // get path (and # of steps) from NPC to player
+                // TODO: BUG: If player is on bottom row of map, monsters are unable to find
+                // a path to the player and do nothing instead
                 let path = rltk::a_star_search(
                     xy_idx(pos.x, pos.y) as i32,
                     xy_idx(player_position.x, player_position.y) as i32,
                     &mut *map,
                 );
                 //println!("path.steps.len(): {:#?}", path.steps.len());
-
-                let (next_x, next_y) = (
-                    path.steps[1] as i32 % map.width,
-                    path.steps[1] as i32 / map.width,
-                );
 
                 // assume npc viewshed needs to be updated
                 view.dirty = true;
@@ -97,11 +94,7 @@ pub fn run_npc_ai(
 
                 // if the next step would put the NPC on top of the player, do an attack instead
                 if path.success && path.steps.len() <= 2 {
-                    if true {
-                        //if (next_x != player_position.x || next_y != player_position.y) {
-                        // if where the npc wants to move is different than both the player and also other monsters
-                        // if (next_x != player_position.x || next_y != player_position.y)
-                        //     && !map.blocked_tiles[xy_idx(next_x, next_y)]
+                    if true { // TODO : why do I need this true statement?!
                         {
                             //define the parameters of the combat attack
                             let combat_attack: CombatAttack = CombatAttack {
@@ -113,7 +106,6 @@ pub fn run_npc_ai(
                             };
 
                             //insert the combat attack to be resolved in the next run of the system
-                            //commands.spawn(combat_attack);
                             ev_combat.send(combat_attack);
 
                             let npc_text = "Attack!".to_string();
@@ -128,47 +120,27 @@ pub fn run_npc_ai(
                                 [npc_text_pos_x, npc_text_pos_y + 1],
                                 npc_text.fg(Color::BLUE),
                             );
-                            //return;
                         }
                     }
                 }
 
-                // if distance_to_player <= 1.43 { //1.43 is a good number
-                //     let npc_text = "Attack!".to_string();
-                //     let npc_text_pos_x = std::cmp::min(
-                //         std::cmp::max(pos.x - (npc_text.len() / 2) as i32, 0),
-                //         MAP_WIDTH - npc_text.len() as i32,
-                //     );
-                //     let npc_text_pos_y = std::cmp::min(pos.y + 1, MAP_HEIGHT);
-                //     // TODO: smart positioning of text re: relative to border of game window
-                //     terminal.put_string(
-                //         [npc_text_pos_x, npc_text_pos_y + 1],
-                //         npc_text.fg(Color::BLUE),
-                //     );
-                //     return;
-                // }
                 if path.success && path.steps.len() > 2 {
                     //if distance_to_player > 1.2 { // 1.43 is a good number
                     if view
                         .visible_tiles
                         .contains(&Point::new(player_position.x, player_position.y))
                     {
-                        // let path = rltk::a_star_search(
-                        //     xy_idx(pos.x, pos.y) as i32,
-                        //     xy_idx(player_position.x, player_position.y) as i32,
-                        //     &mut *map,
-                        // );
 
                         // println!(
                         //     "path_success: {:#?}; path.steps.len(): {:#?}",
                         //     path.success,
                         //     path.steps.len()
                         // );
-                        //if path.success && path.steps.len() > 1 {
-                        // let (next_x, next_y) = (
-                        //     path.steps[1] as i32 % map.width,
-                        //     path.steps[1] as i32 / map.width,
-                        // );
+
+                        let (next_x, next_y) = (
+                            path.steps[1] as i32 % map.width,
+                            path.steps[1] as i32 / map.width,
+                        );
 
                         // if where the npc wants to move is different than both the player and also other monsters
                         if (next_x != player_position.x || next_y != player_position.y)
@@ -187,8 +159,6 @@ pub fn run_npc_ai(
                             // set the new position to be a blocked tile
                             map.blocked_tiles[xy_idx(pos.x, pos.y)] = true;
                         }
-
-                        //}
                     }
                 }
             }
