@@ -35,15 +35,43 @@ pub fn spawn_player(commands: &mut Commands, position: Position) {
         .insert(Inventory);
 }
 
-pub fn spawn_random_item(commands: &mut Commands, position: Position) {
+pub fn spawn_random_item(commands: &mut Commands, position: Position, rng: &mut RNG) {
     // TODO: replace this RNG line with getting the world RNG resource
-    let mut rng = RNG(RandomNumberGenerator::seeded(RNG_SEED));
+    //let mut rng = RNG(RandomNumberGenerator::seeded(RNG_SEED));
 
+    // roll for the type of item to roll
+    let item_type = rng.0.roll_dice(1, 2); // TODO: change this to spawn fewer equipment
+
+    // if random item type is equipment
+    if item_type == 1 {
+        let name = Name(String::from("Dagger"));
+        let renderable = Renderable {
+            glyph: '♠',
+            fg: Color::ANTIQUE_WHITE,
+            bg: Color::BLACK,
+        };
+        let item = EquipmentBundle {
+            stat_bonus: CombatStats {
+                max_hp: 0,
+                hp: 0,
+                defense: 0,
+                power: 1,
+            },
+        };
+
+        commands
+            .spawn((name, renderable, item, position))
+            .insert(Item)
+            .insert(IsEquipped);
+        return;
+    }
+
+    // if random item type is potion
     let (name, renderable, item) = match rng.0.roll_dice(1, 6) {
         1 => {
             let name = Name(String::from("Small Health Potion"));
             let renderable = Renderable {
-                glyph: 'Φ',
+                glyph: '♥',
                 fg: Color::MAROON,
                 bg: Color::BLACK,
             };
@@ -53,7 +81,7 @@ pub fn spawn_random_item(commands: &mut Commands, position: Position) {
         2 | 3 => {
             let name = Name(String::from("Health Potion"));
             let renderable = Renderable {
-                glyph: 'Φ',
+                glyph: '♥',
                 fg: Color::CRIMSON,
                 bg: Color::BLACK,
             };
@@ -63,7 +91,7 @@ pub fn spawn_random_item(commands: &mut Commands, position: Position) {
         4 => {
             let name = Name(String::from("Big Health Potion"));
             let renderable = Renderable {
-                glyph: 'Φ',
+                glyph: '♥',
                 fg: Color::RED,
                 bg: Color::BLACK,
             };
@@ -73,7 +101,7 @@ pub fn spawn_random_item(commands: &mut Commands, position: Position) {
         _ => {
             let name = Name(String::from("Small Health Potion"));
             let renderable = Renderable {
-                glyph: 'Φ',
+                glyph: '♥',
                 fg: Color::MAROON,
                 bg: Color::BLACK,
             };

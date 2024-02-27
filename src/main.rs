@@ -103,7 +103,7 @@ fn setup(mut commands: Commands) {
     // spawn item bundle
     item_start_positions
         .iter()
-        .for_each(|pos| spawner::spawn_random_item(&mut commands, pos.clone()));
+        .for_each(|pos| spawner::spawn_random_item(&mut commands, pos.clone(), &mut myrng));
 
     commands.spawn(map);
     commands.spawn(myrng);

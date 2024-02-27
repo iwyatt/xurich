@@ -36,18 +36,42 @@ pub fn ev_pickup_item(
 pub fn ev_use_item(
     mut commands: Commands,
     mut ev_use_item: EventReader<EV_ItemUse>,
-    query_items: Query<(Entity, Option<&HealthPotion>), With<Item>>,
+    query_items: Query<(Entity, Option<&HealthPotion>, Option<&EquipmentBundle>), With<Item>>,
     mut query_combat_stats: Query<(Entity, &mut CombatStats)>,
 ) {
     for event in ev_use_item.read() {
-        let (entity, potion) = query_items
+        let (entity, potion, equipment) = query_items
             .iter()
-            .filter(|(e, _)| *e == event.item)
-            .map(|(e, p)| (e, p))
+            .filter(|(e, _, _)| *e == event.item)
+            .map(|(e, p, eb)| (e, p, eb))
             .nth(0)
             .unwrap();
 
         // do something with the item
+
+        // equipment
+        if let Some(equipment) = equipment {
+            // TODO: if there is an item of the same type already equipped
+            let mut stats = query_combat_stats
+                .iter_mut()
+                .filter(|(e, _)| event.source == *e)
+                .map(|(_, c)| c)
+                .nth(0)
+                .unwrap();
+
+            println!("pre-equip: {:#?}", stats);
+            // equipping the item increases the combat stats of the entity
+            stats.power += equipment.stat_bonus.power;
+            stats.defense += equipment.stat_bonus.defense;
+            stats.max_hp += equipment.stat_bonus.max_hp;
+
+            // remove the equipment from the usable inventory
+            //commands.entity(entity).despawn();
+            println!("post-equip: {:#?}", stats);
+            commands.entity(entity).insert(IsEquipped);
+            return;
+        }
+
         // potion
         if let Some(potion) = potion {
             let mut stats = query_combat_stats
@@ -62,4 +86,31 @@ pub fn ev_use_item(
             commands.entity(entity).despawn();
         }
     }
+}
+
+// when player presses the num key corresponding to an unequipped item in inventory
+pub fn equip_item(
+    commands: Commands,
+    equpment: EquipmentBundle,
+    //mut ev_use_item: EventReader<EV_ItemEquip>,
+    //query_items: Query<(Entity, Option<&EquipmentBundle>, Option<&IsEquipped>)>,
+    mut combatstats: CombatStats,
+) {
+    // remove existing item of same type (weapon or body armor)
+
+    // update combat stats for new item
+    // add IsEquipped tag for renderer to pick up
+    // remove item from 'usable' inventory
+}
+
+// when player presses the num key corresponding to an unequipped item in inventory
+fn ev_unequip_item(
+    commands: Commands,
+    //mut ev_use_item: EventReader<EV_ItemUnequip>,
+    query_items: Query<(Entity, &EquipmentBundle, &IsEquipped), With<Player>>,
+    mut query_combat_stats: Query<(Entity, &mut CombatStats), With<Player>>,
+) {
+    // remove IsEquipped tag for renderer to pick up
+    // update combat stats to reflect removed item
+    // drop removed item on ground near player
 }

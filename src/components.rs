@@ -141,11 +141,22 @@ pub struct Item;
 //     Consumable,
 // }
 
-#[derive(Component, Debug)]
-pub struct Weapon;
+// #[derive(Component, Debug)]
+// pub struct Weapon;
+
+// #[derive(Component, Debug)]
+// pub struct Armor;
 
 #[derive(Component, Debug)]
-pub struct Armor;
+pub struct IsEquipped;
+
+#[derive(Component, Debug)]
+pub struct EquipmentBundle {
+    pub stat_bonus: CombatStats, //these are the stats that get added to the player's combat stats
+                                 // durability
+                                 // weight
+                                 // volume
+}
 
 #[derive(Component, Debug)]
 pub struct Consumable;

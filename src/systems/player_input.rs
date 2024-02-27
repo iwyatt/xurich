@@ -54,15 +54,8 @@ pub fn player_use_item(
         return;
     };
 
-    // if !input.just_pressed(KeyCode::Key1)
-    //     && !input.just_pressed(KeyCode::Key2)
-    //     && !input.just_pressed(KeyCode::Key3)
-    // {
-    //     return;
-    // };
-    println!("input: {:#?}", input);
+    //println!("input: {:#?}", input);
 
-    // get the 1st item in the inventory player inventory
     // TODO: this code seems like it could be cleaner Ok(i) isn't necessary.
     if let Ok(pinventory) = query_inventory.get_single() {
         pinventory
@@ -71,7 +64,7 @@ pub fn player_use_item(
             .enumerate()
             .filter(|(e, _)| e == &quick_slot)
             .for_each(|(_, c)| {
-                //println!("pinventory.2.iter().for_each(|c {:#?}", pinventory.2);
+                // println!("pinventory.2.iter().for_each(|c {:#?}", pinventory.2);
 
                 if let Ok(_) = query_items.get(*c) {
                     // println!("item: {:#?}", i);
@@ -91,6 +84,7 @@ pub fn player_walk(
     //mut player_pos: Query<(Entity, &Player, &mut Position)>,
     mut entity_positions: Query<&mut Position>,
     mut player_pos: Query<(Entity, &Player), With<Position>>,
+    query_player_stats: Query<(Entity, &CombatStats), With<Player>>,
     query_enemy: Query<Entity, (With<Enemy>, With<Position>)>,
     query_map: Query<&Map>,
     mut query_viewshed: Query<&mut Viewshed>,
@@ -115,54 +109,32 @@ pub fn player_walk(
 
     let curr = IVec2::new(pos.x, pos.y);
     //println!("player position IVec2::new(pos.x, pos.y) : {:#?}", curr);
+    
     let next = curr + move_input;
 
-    // check if player can validly move to desired spot
-    // if map.blocked_tiles[xy_idx(next.x, next.y)] {
-    //     return;
-    // };
-
-    //     fn print_selected_character_name_system(
-    //         query: Query<&Character>,
-    //         selection: Res<SelectedCharacter>
-    //  )
-    //  {
-    //      if let Ok(selected_character) = query.get_component::<Character>(selection.entity) {
-    //          println!("{}", selected_character.name);
-    //      }
-    //  }
-
+    // check if tile to be moved in to is in the list of blocked tiles
     if map.blocked_tiles[xy_idx(next.x, next.y)] {
-        //define the parameters of the combat attack
-        // let enemy = query_enemy
-        //     .iter()
-        //     .filter(|e| xy_idx(e.2.x, e.2.y) == xy_idx(next.x, next.y))
-        //     .map(|e| e.0)
-        //     .nth(0)
-        //     .unwrap();
-
+        
+        // if it is, then get the enemy that is blocking
         query_enemy.iter().for_each(|e| {
             //println!("query_enemy.iter().for_each(|e| : {:#?}", &e);
+            
             if let Ok(enemy_pos) = entity_positions.get_component::<Position>(e) {
                 //println!("Ok(enemy_pos) : {:#?}", &enemy_pos);
                 if xy_idx(enemy_pos.x, enemy_pos.y) == xy_idx(next.x, next.y) {
+                    let player_power = query_player_stats.single();
                     let combat_attack: CombatAttack = CombatAttack {
                         source: entity,
                         // TODO: need to change this to be whatever entity is occupying the space that is
                         // trying to be moved in to
                         target: e,
-                        damage: (1, 4), //TODO: Update the damage to be based on the combat stats
+                        damage: (1, player_power.1.power), // TODO: Update the damage to have a lower end
                     };
                     println!("player_combat_attack: {:#?}", &combat_attack);
                     ev_combat.send(combat_attack);
                 }
             }
         });
-        // .filter(|e| xy_idx(e.x, e.y) == xy_idx(next.x, next.y))
-        // .map(|e| )
-        // .nth(0)
-        // .unwrap();
-        // return;
     } else {
         // if not blocked, then update player position
         pos.x = next.x;
