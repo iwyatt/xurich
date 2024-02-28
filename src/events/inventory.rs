@@ -13,9 +13,17 @@ pub fn ev_pickup_item(
             .iter()
             .filter(|(_, p)| p.x == e.position.x && p.y == e.position.y)
             .map(|(e, _)| e)
-            .nth(0)
-            .unwrap();
-        // TODO : Handle if there are no items at position
+            .nth(0);
+        if item_entity.is_none() {
+            return;
+        };
+
+        // let item_entity = query_items
+        //     .iter()
+        //     .filter(|(_, p)| p.x == e.position.x && p.y == e.position.y)
+        //     .map(|(e, _)| e)
+        //     .nth(0)
+        //     .unwrap();
 
         // get target's inventory
         let inventory_entity = query_inventory
@@ -26,38 +34,110 @@ pub fn ev_pickup_item(
             .unwrap();
 
         // add item as child to inventory component
-        commands.entity(inventory_entity).add_child(item_entity);
+        commands
+            .entity(inventory_entity)
+            .add_child(item_entity.unwrap());
         println!("inventory.items.push(new_item): {:#?}", inventory_entity);
         //  remove item position as it is now only within the character's inventory and not on the map
-        commands.entity(item_entity).remove::<Position>();
+        commands.entity(item_entity.unwrap()).remove::<Position>();
     }
 }
 
 pub fn ev_use_item(
     mut commands: Commands,
     mut ev_use_item: EventReader<EV_ItemUse>,
-    query_items: Query<(Entity, Option<&HealthPotion>, Option<&EquipmentBundle>), With<Item>>,
+    query_items: Query<
+        (
+            Entity,
+            Option<&HealthPotion>,
+            Option<&EquipmentBundle>,
+            Option<&Weapon>,
+            Option<&Armor>,
+        ),
+        With<Item>,
+    >,
+    query_equipped: Query<
+        (
+            Entity,
+            Option<&Weapon>,
+            Option<&Armor>,
+            Option<&EquipmentBundle>,
+        ),
+        With<IsEquipped>,
+    >,
+    query_player_position: Query<&Position, With<Player>>,
     mut query_combat_stats: Query<(Entity, &mut CombatStats)>,
 ) {
     for event in ev_use_item.read() {
-        let (entity, potion, equipment) = query_items
+        let (entity, potion, equipment, isweapon, isarmor) = query_items
             .iter()
-            .filter(|(e, _, _)| *e == event.item)
-            .map(|(e, p, eb)| (e, p, eb))
+            .filter(|(e, _, _, _, _)| *e == event.item)
+            .map(|(e, p, eb, w, a)| (e, p, eb, w, a))
             .nth(0)
             .unwrap();
 
+        // get stats of entity equipping the item
+        let mut stats = query_combat_stats
+            .iter_mut()
+            .filter(|(e, _)| event.source == *e)
+            .map(|(_, c)| c)
+            .nth(0)
+            .unwrap();
         // do something with the item
 
-        // equipment
+        // equipment // TODO: Update so that Armor can be equipped
         if let Some(equipment) = equipment {
             // TODO: if there is an item of the same type already equipped
-            let mut stats = query_combat_stats
-                .iter_mut()
-                .filter(|(e, _)| event.source == *e)
-                .map(|(_, c)| c)
-                .nth(0)
-                .unwrap();
+
+            // if there are any equipped weapons
+            // TODO: this assumes the new item is a weapon, change it
+            query_equipped.iter().for_each(|e| {
+                // if both the new item is a weapon and also there is a weapon equipped
+                if isweapon.is_some() && e.1.is_some() {
+                    // if the old item weapon has a equipment bundle
+                    if let Some(item) = e.3 {
+                        //remove item by lowering combat stats
+                        println!("removing old weapon pre-removal stats: {:#?}", stats);
+                        stats.power -= item.stat_bonus.power;
+                        stats.defense -= item.stat_bonus.defense;
+                        stats.max_hp -= item.stat_bonus.max_hp;
+                        println!("removing old weapon post-removal stats: {:#?}", stats);
+
+                        // remove the isequipped tag
+                        commands.entity(e.0).remove::<IsEquipped>();
+
+                        // remove the parent inventory
+                        commands.entity(e.0).remove_parent();
+
+                        // drop item at player's position
+                        let pos = query_player_position.single();
+                        commands.entity(e.0).insert(Position { x: pos.x, y: pos.y });
+                    }
+
+                    // if both the new item is a weapon and also there is a weapon equipped
+                    if isarmor.is_some() && e.3.is_some() {
+                        // if the old item weapon has a equipment bundle
+                        if let Some(item) = e.3 {
+                            //remove item by lowering combat stats
+                            println!("removing old weapon pre-removal stats: {:#?}", stats);
+                            stats.power -= item.stat_bonus.power;
+                            stats.defense -= item.stat_bonus.defense;
+                            stats.max_hp -= item.stat_bonus.max_hp;
+                            println!("removing old weapon post-removal stats: {:#?}", stats);
+
+                            // remove the isequipped tag
+                            commands.entity(e.0).remove::<IsEquipped>();
+
+                            // remove the parent inventory
+                            commands.entity(e.0).remove_parent();
+
+                            // drop item at player's position
+                            let pos = query_player_position.single();
+                            commands.entity(e.0).insert(Position { x: pos.x, y: pos.y });
+                        }
+                    }
+                }
+            });
 
             println!("pre-equip: {:#?}", stats);
             // equipping the item increases the combat stats of the entity

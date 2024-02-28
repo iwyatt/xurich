@@ -109,16 +109,15 @@ pub fn player_walk(
 
     let curr = IVec2::new(pos.x, pos.y);
     //println!("player position IVec2::new(pos.x, pos.y) : {:#?}", curr);
-    
+
     let next = curr + move_input;
 
     // check if tile to be moved in to is in the list of blocked tiles
     if map.blocked_tiles[xy_idx(next.x, next.y)] {
-        
         // if it is, then get the enemy that is blocking
         query_enemy.iter().for_each(|e| {
             //println!("query_enemy.iter().for_each(|e| : {:#?}", &e);
-            
+
             if let Ok(enemy_pos) = entity_positions.get_component::<Position>(e) {
                 //println!("Ok(enemy_pos) : {:#?}", &enemy_pos);
                 if xy_idx(enemy_pos.x, enemy_pos.y) == xy_idx(next.x, next.y) {

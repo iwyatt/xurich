@@ -22,7 +22,11 @@ pub fn tick(
     query_maps: Query<&Map>,
     query_camera: Query<&TiledCamera>,
     query_player_inventory: Query<(&Inventory, &Children), With<Player>>,
-    query_player_inventory_items: Query<(&crate::components::Name, &Renderable), With<Item>>,
+    query_player_inventory_items: Query<
+        (&crate::components::Name, &Renderable),
+        (With<Item>, Without<IsEquipped>),
+    >,
+    query_player_equipped_items: Query<&Renderable, With<IsEquipped>>,
     mut query_player_viewshed: Query<&mut Viewshed, With<Player>>,
     query_windows: Query<&Window, With<PrimaryWindow>>,
     query_gamestate: Query<&mut GameState>,
@@ -91,6 +95,16 @@ pub fn tick(
     // TODO: Set the HP color to match the player character glyph color
     //  which should be red/yellow/green depending on hp threshold
     terminal.put_string([0, MAP_HEIGHT + 1], line.fg(Color::WHITE));
+
+    // render player equipment
+    query_player_equipped_items.iter().for_each(|e| {
+        let (x, y) = if e.glyph == '♠' {
+            (MAP_WIDTH - 4, MAP_HEIGHT + 1)
+        } else {
+            (MAP_WIDTH - 2, MAP_HEIGHT + 1)
+        };
+        terminal.put_string([x, y], e.glyph.to_string().fg(e.fg));
+    });
 
     // render player quick-inventory
     if let Ok(pinventory) = query_player_inventory.get_single() {

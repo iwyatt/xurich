@@ -40,29 +40,181 @@ pub fn spawn_random_item(commands: &mut Commands, position: Position, rng: &mut 
     //let mut rng = RNG(RandomNumberGenerator::seeded(RNG_SEED));
 
     // roll for the type of item to roll
-    let item_type = rng.0.roll_dice(1, 2); // TODO: change this to spawn fewer equipment
+    let item_type = rng.0.roll_dice(1, 3); // TODO: change this to spawn fewer equipment
 
-    // if random item type is equipment
+    // if random item type is armor
     if item_type == 1 {
-        let name = Name(String::from("Dagger"));
-        let renderable = Renderable {
-            glyph: '♠',
-            fg: Color::ANTIQUE_WHITE,
-            bg: Color::BLACK,
-        };
-        let item = EquipmentBundle {
-            stat_bonus: CombatStats {
-                max_hp: 0,
-                hp: 0,
-                defense: 0,
-                power: 1,
-            },
+        let (name, renderable, item) = match rng.0.roll_dice(1, 100) {
+            1..=25 => {
+                let name = Name(String::from("Leather Poncho"));
+                let renderable = Renderable {
+                    glyph: '♣',
+                    fg: Color::WHITE,
+                    bg: Color::BLACK,
+                };
+                let item = EquipmentBundle {
+                    stat_bonus: CombatStats {
+                        max_hp: 0,
+                        hp: 0,
+                        defense: 1,
+                        power: 0,
+                    },
+                };
+                (name, renderable, item)
+            }
+
+            _ => {
+                let name = Name(String::from("Magic Leather Jerkin"));
+                let renderable = Renderable {
+                    glyph: '♣',
+                    fg: Color::SEA_GREEN,
+                    bg: Color::BLACK,
+                };
+                let item = EquipmentBundle {
+                    stat_bonus: CombatStats {
+                        max_hp: 10,
+                        hp: 0,
+                        defense: 2,
+                        power: 1,
+                    },
+                };
+                (name, renderable, item)
+            }
         };
 
         commands
             .spawn((name, renderable, item, position))
             .insert(Item)
-            .insert(IsEquipped);
+            .insert(Armor);
+        return;
+    };
+
+    // if random item type is weapon
+    if item_type == 2 {
+        // let name = Name(String::from("Dagger"));
+        // let renderable = Renderable {
+        //     glyph: '♠',
+        //     fg: Color::ANTIQUE_WHITE,
+        //     bg: Color::BLACK,
+        // };
+        // let item = EquipmentBundle {
+        //     stat_bonus: CombatStats {
+        //         max_hp: 0,
+        //         hp: 0,
+        //         defense: 0,
+        //         power: 1,
+        //     },
+        // };
+
+        let (name, renderable, item) = match rng.0.roll_dice(1, 100) {
+            1..=10 => {
+                let name = Name(String::from("Fine Dagger"));
+                let renderable = Renderable {
+                    glyph: '♠',
+                    fg: Color::WHITE,
+                    bg: Color::BLACK,
+                };
+                let item = EquipmentBundle {
+                    stat_bonus: CombatStats {
+                        max_hp: 0,
+                        hp: 0,
+                        defense: 0,
+                        power: 2,
+                    },
+                };
+                (name, renderable, item)
+            }
+            11..=16 => {
+                let name = Name(String::from("Magic Dagger"));
+                let renderable = Renderable {
+                    glyph: '♠',
+                    fg: Color::SEA_GREEN,
+                    bg: Color::BLACK,
+                };
+                let item = EquipmentBundle {
+                    stat_bonus: CombatStats {
+                        max_hp: 5,
+                        hp: 0,
+                        defense: 0,
+                        power: 1,
+                    },
+                };
+                (name, renderable, item)
+            }
+            17..=21 => {
+                let name = Name(String::from("Rare Dagger"));
+                let renderable = Renderable {
+                    glyph: '♠',
+                    fg: Color::BLUE,
+                    bg: Color::BLACK,
+                };
+                let item = EquipmentBundle {
+                    stat_bonus: CombatStats {
+                        max_hp: 5,
+                        hp: 0,
+                        defense: 0,
+                        power: 2,
+                    },
+                };
+                (name, renderable, item)
+            }
+            22..=25 => {
+                let name = Name(String::from("Epic Dagger of Parrying"));
+                let renderable = Renderable {
+                    glyph: '♠',
+                    fg: Color::PURPLE,
+                    bg: Color::BLACK,
+                };
+                let item = EquipmentBundle {
+                    stat_bonus: CombatStats {
+                        max_hp: 5,
+                        hp: 0,
+                        defense: 2,
+                        power: 1,
+                    },
+                };
+                (name, renderable, item)
+            }
+            26 => {
+                let name = Name(String::from("Legendary Dagger of Heros"));
+                let renderable = Renderable {
+                    glyph: '♠',
+                    fg: Color::PURPLE,
+                    bg: Color::BLACK,
+                };
+                let item = EquipmentBundle {
+                    stat_bonus: CombatStats {
+                        max_hp: 10,
+                        hp: 0,
+                        defense: 3,
+                        power: 3,
+                    },
+                };
+                (name, renderable, item)
+            }
+            _ => {
+                let name = Name(String::from("Dagger"));
+                let renderable = Renderable {
+                    glyph: '♠',
+                    fg: Color::ANTIQUE_WHITE,
+                    bg: Color::BLACK,
+                };
+                let item = EquipmentBundle {
+                    stat_bonus: CombatStats {
+                        max_hp: 0,
+                        hp: 0,
+                        defense: 0,
+                        power: 1,
+                    },
+                };
+                (name, renderable, item)
+            }
+        };
+
+        commands
+            .spawn((name, renderable, item, position))
+            .insert(Item)
+            .insert(Weapon);
         return;
     }
 

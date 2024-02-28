@@ -7,7 +7,7 @@ mod systems;
 mod prelude {
     // game play area max width and height
     // set random seed
-    pub const RNG_SEED: u64 = 0;
+    pub const RNG_SEED: u64 = 1;
     pub const MAP_WIDTH: i32 = 80;
     pub const MAP_HEIGHT: i32 = 50;
     pub use crate::components::*;

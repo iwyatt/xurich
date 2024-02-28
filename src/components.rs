@@ -141,11 +141,11 @@ pub struct Item;
 //     Consumable,
 // }
 
-// #[derive(Component, Debug)]
-// pub struct Weapon;
+#[derive(Component, Debug)]
+pub struct Weapon;
 
-// #[derive(Component, Debug)]
-// pub struct Armor;
+#[derive(Component, Debug)]
+pub struct Armor;
 
 #[derive(Component, Debug)]
 pub struct IsEquipped;

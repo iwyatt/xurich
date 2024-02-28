@@ -68,8 +68,8 @@ impl Default for MapGenerator {
             map_generator_algo: MapGenerationAlgo::RoomsAndCorridors,
             room_size_range: Some((2, 10)),
             rooms_range: Some((4, (MAP_HEIGHT * MAP_WIDTH / 400).try_into().unwrap())),
-            mobs_range: (1, (MAP_HEIGHT * MAP_WIDTH / 400).try_into().unwrap()),
-            items_range: (1, (MAP_HEIGHT * MAP_WIDTH / 400 / 2).try_into().unwrap()),
+            mobs_range: (1, (MAP_HEIGHT * MAP_WIDTH / 200).try_into().unwrap()),
+            items_range: (10, (MAP_HEIGHT * MAP_WIDTH / 200).try_into().unwrap()), // TODO: change min range for testing
             cell_density: Some((MAP_HEIGHT * MAP_WIDTH / 400) as usize),
         }
     }
