@@ -23,8 +23,8 @@ pub fn idx_xy(idx: usize) -> (i32, i32) {
 pub struct MapBundle {
     pub map: Map,
     pub player_start_pos: Position,
-    pub npcs: Vec<NPCBundle>,
-    //pub items: Vec<Item>,
+    pub npcs: Vec<NPCBundle>, // TODO: why does the map have to have an npc array?! but not items?
+                              //pub items: Vec<Item>,
 }
 
 #[derive(Component, PartialEq, Clone)]
@@ -48,6 +48,7 @@ pub struct Tile {
 pub enum TileType {
     Wall,
     Floor,
+    DownStairs,
 }
 
 // MapGenerator provides parameters for new map generation
@@ -79,7 +80,7 @@ pub enum MapGenerationAlgo {
     RoomsAndCorridors,
     // CellularAutomata,
     // HiveMap,
-    // DrunkardsWalk,
+    DrunkardsWalk,
     // MazesAndLabyrinths,
 }
 
@@ -359,6 +360,195 @@ impl Map {
                     location: Position { x: x, y: y },
                 };
             }
+        }
+
+        // set player start position
+        let player_start_pos = Position {
+            x: MAP_WIDTH / 2,
+            y: MAP_HEIGHT / 2,
+        };
+
+        // decide the number of mobs
+        let mut num_mobs = mapgen
+            .rng
+            .0
+            .range(mapgen.mobs_range.0, mapgen.mobs_range.1 + 1);
+
+        // decide the number of items
+        let mut num_items = mapgen
+            .rng
+            .0
+            .range(mapgen.items_range.0, mapgen.items_range.1 + 1);
+
+        // get set of tiles where a mob can be spawned
+        let available_tiles = map
+            .tiles
+            .iter()
+            .filter(|t| t.tile != TileType::Wall)
+            .map(|t| &t.location)
+            .collect::<Vec<&Position>>();
+
+        // println!("available_tiles: {:#?}", available_tiles.len());
+
+        // initialize npc positions vector
+        let mut mob_start_pos = Vec::<Position>::new();
+
+        // add mobs to random position in available tiles until number of mobs have been added
+        while num_mobs > 0 {
+            //let position = available_tiles[mapgen.rng.0.range(0, available_tiles.len())].clone();
+            let tile = available_tiles[mapgen.rng.0.range(0, available_tiles.len())];
+            let position = Position {
+                x: tile.x,
+                y: tile.y,
+            };
+
+            // if the random position is not the player's start position, then add
+            if position != player_start_pos {
+                mob_start_pos.push(position);
+                num_mobs -= 1;
+            }
+        }
+        // println!("mob_start_pos: {:#?}", mob_start_pos);
+
+        // initialize item positions vector
+        let mut item_start_pos = Vec::<Position>::new();
+        // add items to random position in avialable tiles until number ofitems have been added
+        while num_items > 0 {
+            //let position = available_tiles[mapgen.rng.0.range(0, available_tiles.len())].clone();
+            let tile = available_tiles[mapgen.rng.0.range(0, available_tiles.len())];
+            let position = Position {
+                x: tile.x,
+                y: tile.y,
+            };
+
+            // if the random position is not the player's start position, then add
+            // TODO : should just remove the player start position from the avialable tiles
+            // TODO : should just remove the mob start position from the available tiles
+            if position != player_start_pos && !mob_start_pos.contains(&position) {
+                // remove the available tile now that it has an item on it
+                item_start_pos.push(position);
+                num_items -= 1;
+            }
+        }
+
+        (map, player_start_pos, mob_start_pos, item_start_pos)
+    }
+
+    pub fn new_map_drunkardswalk(
+        mut mapgen: MapGenerator,
+    ) -> (Map, Position, Vec<Position>, Vec<Position>) {
+        let mut map = Map {
+            rooms: Vec::new(),
+            blocked_tiles: vec![true; (MAP_HEIGHT * MAP_WIDTH) as usize],
+            tiles: vec![
+                Tile {
+                    tile: TileType::Wall,
+                    render: Renderable {
+                        glyph: '#',
+                        fg: Color::GRAY,
+                        bg: Color::BLACK
+                    },
+                    location: Position { x: 0, y: 0 }
+                };
+                (MAP_HEIGHT * MAP_WIDTH) as usize
+            ],
+            height: MAP_HEIGHT,
+            width: MAP_WIDTH,
+            revealed_tiles: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
+        };
+
+        // TODO: REFACTOR: dumb but works - set the position of each tile in the vector of map tiles to a different value
+        for x in 0..MAP_WIDTH {
+            for y in 0..MAP_HEIGHT {
+                map.tiles[xy_idx(x, y)].location.x = x;
+                map.tiles[xy_idx(x, y)].location.y = y;
+            }
+        }
+
+        // drunkard's walk
+        //  Set a central starting point
+        // let starting_position = Position {
+        //     x: MAP_WIDTH / 2,
+        //     y: MAP_HEIGHT / 2,
+        // };
+        // let sx = mapgen.rng.0.range(1, MAP_WIDTH - 1);
+        // let sy = mapgen.rng.0.range(1, MAP_HEIGHT - 1);
+        // let starting_position = Position { x: sx, y: sy };
+        // let start_idx = xy_idx(starting_position.x, starting_position.y);
+        //map.tiles[start_idx].tile = TileType::Floor;
+
+        let total_tiles = map.width * map.height;
+        let desired_floor_tiles = (total_tiles / 3) as usize;
+        let mut floor_tile_count = map
+            .tiles
+            .iter()
+            .filter(|a| a.tile == TileType::Floor)
+            .count();
+        let mut digger_count = 6;
+        let mut active_digger_count = 1;
+
+        while floor_tile_count < desired_floor_tiles {
+            let sx = mapgen.rng.0.range(1, MAP_WIDTH - 1);
+            let sy = mapgen.rng.0.range(1, MAP_HEIGHT - 1);
+            let starting_position = Position { x: sx, y: sy };
+            let start_idx = xy_idx(starting_position.x, starting_position.y);
+            map.tiles[start_idx].tile = TileType::Floor;
+
+            let mut did_something = false;
+            let mut drunk_x = starting_position.x;
+            let mut drunk_y = starting_position.y;
+            let mut drunk_life = 100;
+
+            while drunk_life > 0 {
+                let drunk_idx = xy_idx(drunk_x, drunk_y);
+                if map.tiles[drunk_idx].tile == TileType::Wall {
+                    did_something = true;
+                }
+                map.tiles[drunk_idx].tile = TileType::DownStairs;
+
+                let stagger_direction = mapgen.rng.0.roll_dice(1, 4);
+                match stagger_direction {
+                    1 => {
+                        if drunk_x > 2 {
+                            drunk_x -= 1;
+                        }
+                    }
+                    2 => {
+                        if drunk_x < map.width - 2 {
+                            drunk_x += 1;
+                        }
+                    }
+                    3 => {
+                        if drunk_y > 2 {
+                            drunk_y -= 1;
+                        }
+                    }
+                    _ => {
+                        if drunk_y < map.height - 2 {
+                            drunk_y += 1;
+                        }
+                    }
+                }
+
+                drunk_life -= 1;
+            }
+            if did_something {
+                //self.take_snapshot();
+                active_digger_count += 1;
+            }
+
+            digger_count += 1;
+            for t in map.tiles.iter_mut() {
+                if t.tile == TileType::DownStairs {
+                    t.tile = TileType::Floor;
+                    t.render.glyph = '.';
+                }
+            }
+            floor_tile_count = map
+                .tiles
+                .iter()
+                .filter(|a| a.tile == TileType::Floor)
+                .count();
         }
 
         // set player start position

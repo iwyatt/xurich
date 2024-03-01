@@ -89,8 +89,10 @@ fn setup(mut commands: Commands) {
         .spawn((term_bundle, AutoCamera))
         .insert(GameTerminal);
 
-    let (map, player_start_position, mob_start_positions, item_start_positions) = Map::random();
-
+    //let (map, player_start_position, mob_start_positions, item_start_positions) = Map::random();
+    let mapgen = MapGenerator::default();
+    let (map, player_start_position, mob_start_positions, item_start_positions) =
+        Map::new_map_drunkardswalk(mapgen);
     // TODO: move player and npc spawn into map generation
     // spawn player on map
     spawner::spawn_player(&mut commands, player_start_position);
