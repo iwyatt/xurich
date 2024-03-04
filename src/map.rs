@@ -166,9 +166,10 @@ impl Map {
 
     pub fn random() -> (Map, Position, Vec<Position>, Vec<Position>) {
         let mut mapgen = MapGenerator::default();
-        let map_type = mapgen.rng.0.roll_dice(1, 2);
+        let map_type = mapgen.rng.0.roll_dice(1, 3);
         let map = match map_type {
             1 => Map::new_map_roomsandcorridors(mapgen), // TODO: randomize the parameters in mapgen
+            2 => Map::new_map_drunkardswalk(mapgen),     // TODO: randomize the parameters in mapgen
             _ => Map::new_map_cellularautomata(mapgen),  // TODO: randomize the parameters in mapgen
         };
         return map;
@@ -198,8 +199,8 @@ impl Map {
                 };
                 (MAP_HEIGHT * MAP_WIDTH) as usize
             ],
-            height: MAP_HEIGHT,
-            width: MAP_WIDTH,
+            height: MAP_HEIGHT - 1,
+            width: MAP_WIDTH - 1,
             revealed_tiles: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
         };
 
@@ -353,8 +354,8 @@ impl Map {
                 map.tiles[idx] = Tile {
                     tile: TileType::Wall,
                     render: Renderable {
-                        glyph: '#',
-                        fg: Color::GRAY,
+                        glyph: '♣',
+                        fg: Color::DARK_GREEN,
                         bg: Color::BLACK,
                     },
                     location: Position { x: x, y: y },

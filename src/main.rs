@@ -7,7 +7,7 @@ mod systems;
 mod prelude {
     // game play area max width and height
     // set random seed
-    pub const RNG_SEED: u64 = 1;
+    pub const RNG_SEED: u64 = 0;
     pub const MAP_WIDTH: i32 = 80;
     pub const MAP_HEIGHT: i32 = 50;
     pub use crate::components::*;
@@ -78,7 +78,7 @@ fn setup(mut commands: Commands) {
     };
     commands.spawn(game_state);
 
-    // define the terminal
+    // define the play terminal
     let term_size = [MAP_WIDTH, MAP_HEIGHT + 2]; // +2 for 2 lines of UI. Note this is 1-index, not 0-index unlike term.put_char
                                                  // TODO: BUG: I suspect that the above is causing an issue with NPC_AI.rs pathing when player is on bottom row of map
     let terminal = Terminal::new(term_size).with_border(Border::single_line());
@@ -91,8 +91,7 @@ fn setup(mut commands: Commands) {
 
     //let (map, player_start_position, mob_start_positions, item_start_positions) = Map::random();
     let mapgen = MapGenerator::default();
-    let (map, player_start_position, mob_start_positions, item_start_positions) =
-        Map::new_map_drunkardswalk(mapgen);
+    let (map, player_start_position, mob_start_positions, item_start_positions) = Map::random();
     // TODO: move player and npc spawn into map generation
     // spawn player on map
     spawner::spawn_player(&mut commands, player_start_position);
