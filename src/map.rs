@@ -24,7 +24,7 @@ pub struct MapBundle {
     pub map: Map,
     pub player_start_pos: Position,
     pub npcs: Vec<NPCBundle>, // TODO: why does the map have to have an npc array?! but not items?
-                              //pub items: Vec<Item>,
+    //pub items: Vec<Item>,
 }
 
 #[derive(Component, PartialEq, Clone)]
