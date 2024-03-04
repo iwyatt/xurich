@@ -28,8 +28,9 @@ pub struct PlayerBundle {
     pub renderable: Renderable,
     pub stats: CombatStats,
     pub markers: (Player, Actor), // We can nest/include another bundle.
-                                  // Add the components for a standard Bevy Sprite:
-                                  // sprite: SpriteSheetBundle,
+    // Add the components for a standard Bevy Sprite:
+    // sprite: SpriteSheetBundle,
+    pub world_pos: WorldPosition,
 }
 
 impl Default for PlayerBundle {
@@ -58,8 +59,16 @@ impl Default for PlayerBundle {
                 power: 5,
             },
             markers: (Player, Actor),
+            world_pos: WorldPosition { x: 0, y: 0, z: 0 },
         }
     }
+}
+
+#[derive(Component, PartialEq, Clone, Debug)]
+pub struct WorldPosition {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
 }
 
 #[derive(Component, PartialEq, Clone, Debug)]

@@ -6,25 +6,33 @@ use std::{
 };
 
 // public helper functions
+// pub fn world_xy_idx(x: i32, y: i32) -> usize {
+//     let idx = (y * WORLD_MAP_WIDTH) + x;
+//     return idx as usize;
+// }
+
 pub fn xy_idx(x: i32, y: i32) -> usize {
     (y as usize * MAP_WIDTH as usize) + x as usize
 }
 
 pub fn idx_xy(idx: usize) -> (i32, i32) {
-    // y * MAP_WIDTH + x = idx
-    // y = y / MAP_WIDTH - x
     let y = idx as i32 / MAP_WIDTH;
     let x = idx as i32 - (MAP_WIDTH * y);
     (x, y)
 }
 
 // map related structs
+#[derive(Component, Resource)]
+pub struct WorldMap {
+    pub maps: Vec<Map>, //lifetime specifier makes sure each map in vector lives as long as worldmap struct does
+}
+
 #[derive(Component)]
 pub struct MapBundle {
     pub map: Map,
     pub player_start_pos: Position,
     pub npcs: Vec<NPCBundle>, // TODO: why does the map have to have an npc array?! but not items?
-    //pub items: Vec<Item>,
+                              //pub items: Vec<Item>,
 }
 
 #[derive(Component, PartialEq, Clone)]
@@ -35,6 +43,7 @@ pub struct Map {
     pub revealed_tiles: Vec<bool>,
     pub rooms: Vec<rltk::Rect>,
     pub blocked_tiles: Vec<bool>,
+    pub world_pos: WorldPosition,
 }
 
 #[derive(Component, PartialEq, Clone)]
@@ -109,6 +118,7 @@ impl BaseMap for Map {
         //let w = self.width as usize;
         // let (_, _) = idx_xy(idx); // DEBUG ONLY: remove
         //                           // Cardinal directions
+        // TODO: implement diagonals for pathing evaluation
         if self.is_exit_valid(x, y + 1) {
             exits.push((xy_idx(x, y + 1), 1.0))
         }; // up
@@ -138,14 +148,25 @@ impl BaseMap for Map {
     }
 }
 
-// determines where there are blocks on the map that are more than just walls.
+// determines where there are blocks on the map that are more than just walls. eg npcs or blocking entities
 pub struct MapIndexingSystem {}
 impl MapIndexingSystem {
     pub fn run(
-        mut query_map: Query<&mut Map>,
+        //mut query_map: Query<&mut Map>,
+        mut world_map: ResMut<WorldMap>,
+        query_player_world_position: Query<&WorldPosition, With<Player>>,
         query_blocked_positions: Query<&Position, With<BlocksTile>>,
     ) {
-        let mut map = query_map.iter_mut().nth(0).unwrap();
+        //let mut map = query_map.iter_mut().nth(0).unwrap();
+        let px = query_player_world_position.single().x;
+        let py = query_player_world_position.single().y;
+        //let map = &mut world_map.maps[world_xy_idx(px, py)];
+        let map = &mut world_map
+            .maps
+            .iter_mut()
+            .filter(|m| m.world_pos.x == px && m.world_pos.y == py)
+            .nth(0)
+            .unwrap();
         map.populate_blocked_tiles();
 
         query_blocked_positions.iter().for_each(|pos| {
@@ -202,6 +223,7 @@ impl Map {
             height: MAP_HEIGHT - 1,
             width: MAP_WIDTH - 1,
             revealed_tiles: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
+            world_pos: WorldPosition { x: 0, y: 0, z: 0 },
         };
 
         // REFACTOR: dumb but works - set the position of each tile in the vector of map tiles to a different value
@@ -334,6 +356,7 @@ impl Map {
             height: MAP_HEIGHT,
             width: MAP_WIDTH,
             revealed_tiles: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
+            world_pos: WorldPosition { x: 0, y: 0, z: 0 },
         };
 
         // TODO: REFACTOR: dumb but works - set the position of each tile in the vector of map tiles to a different value
@@ -456,6 +479,7 @@ impl Map {
             height: MAP_HEIGHT,
             width: MAP_WIDTH,
             revealed_tiles: vec![false; (MAP_HEIGHT * MAP_WIDTH) as usize],
+            world_pos: WorldPosition { x: 0, y: 0, z: 0 },
         };
 
         // TODO: REFACTOR: dumb but works - set the position of each tile in the vector of map tiles to a different value
@@ -467,17 +491,6 @@ impl Map {
         }
 
         // drunkard's walk
-        //  Set a central starting point
-        // let starting_position = Position {
-        //     x: MAP_WIDTH / 2,
-        //     y: MAP_HEIGHT / 2,
-        // };
-        // let sx = mapgen.rng.0.range(1, MAP_WIDTH - 1);
-        // let sy = mapgen.rng.0.range(1, MAP_HEIGHT - 1);
-        // let starting_position = Position { x: sx, y: sy };
-        // let start_idx = xy_idx(starting_position.x, starting_position.y);
-        //map.tiles[start_idx].tile = TileType::Floor;
-
         let total_tiles = map.width * map.height;
         let desired_floor_tiles = (total_tiles / 3) as usize;
         let mut floor_tile_count = map

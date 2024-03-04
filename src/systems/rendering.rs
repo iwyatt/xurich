@@ -9,7 +9,7 @@ use super::player_input::GameState;
 // game over fn
 fn render_game_over(mut terminal: Mut<'_, bevy_ascii_terminal::Terminal>) {
     terminal.put_string(
-        [MAP_WIDTH / 2, MAP_HEIGHT / 2],
+        [MAP_WIDTH / 2, MAP_HEIGHT / 2].pivot(Pivot::Center),
         "YOUR QUEST HAS ENDED".fg(Color::BLACK).bg(Color::WHITE),
     );
 }
@@ -19,7 +19,9 @@ pub fn tick(
     mut query_terminal: Query<&mut Terminal>,
     query_entities: Query<(&Position, &Renderable, &crate::components::Name)>,
     query_combat_stats: Query<&CombatStats, With<Player>>,
-    query_maps: Query<&Map>,
+    // query_maps: Query<&Map>,
+    mut world_map: ResMut<WorldMap>,
+    query_player_world_pos: Query<&WorldPosition, With<Player>>,
     query_camera: Query<&TiledCamera>,
     query_player_inventory: Query<(&Inventory, &Children), With<Player>>,
     query_player_inventory_items: Query<
@@ -37,7 +39,24 @@ pub fn tick(
         render_game_over(terminal);
         return;
     };
-    let map = query_maps.iter().nth(0).unwrap();
+    //let map = query_maps.iter().nth(0).unwrap();
+    //let player_world_pos = query_player_world_pos.single();
+    // let map = query_maps
+    //     .iter()
+    //     .filter(|m| &m.world_pos == player_world_pos)
+    //     .nth(0)
+    //     .unwrap();
+
+    let px = query_player_world_pos.single().x;
+    let py = query_player_world_pos.single().y;
+    //let map = &mut world_map.maps[world_xy_idx(px, py)];
+    let map = &mut world_map
+        .maps
+        .iter()
+        .filter(|m| m.world_pos.x == px && m.world_pos.y == py)
+        .nth(0)
+        .unwrap();
+
     let mut viewshed = query_player_viewshed.iter_mut().nth(0).unwrap();
 
     // stop rendering if the player's view shed isn't dirty.

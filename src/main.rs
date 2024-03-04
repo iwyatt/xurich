@@ -10,6 +10,8 @@ mod prelude {
     pub const RNG_SEED: u64 = 0;
     pub const MAP_WIDTH: i32 = 80;
     pub const MAP_HEIGHT: i32 = 50;
+    pub const WORLD_MAP_WIDTH: i32 = 3;
+    pub const WORLD_MAP_HEIGHT: i32 = 3;
     pub use crate::components::*;
     pub use crate::map::*;
     pub use crate::npc::*;
@@ -106,6 +108,13 @@ fn setup(mut commands: Commands) {
         .iter()
         .for_each(|pos| spawner::spawn_random_item(&mut commands, pos.clone(), &mut myrng));
 
-    commands.spawn(map);
+    // add map to worldmap resource
+    let mut worldmap = WorldMap {
+        maps: Vec::<Map>::with_capacity(WORLD_MAP_HEIGHT as usize * WORLD_MAP_WIDTH as usize),
+    };
+    //let mapidx = world_xy_idx(map.world_pos.x, map.world_pos.y);
+    worldmap.maps.push(map);
+    commands.insert_resource(worldmap);
+    //commands.spawn(map);
     commands.spawn(myrng);
 }

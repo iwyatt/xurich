@@ -83,21 +83,32 @@ pub fn player_walk(
     mut ev_combat: EventWriter<CombatAttack>,
     //mut player_pos: Query<(Entity, &Player, &mut Position)>,
     mut entity_positions: Query<&mut Position>,
+    mut query_player_world_pos: Query<&mut WorldPosition, With<Player>>,
     mut player_pos: Query<(Entity, &Player), With<Position>>,
     query_player_stats: Query<(Entity, &CombatStats), With<Player>>,
     query_enemy: Query<Entity, (With<Enemy>, With<Position>)>,
-    query_map: Query<&Map>,
+    //query_map: Query<&Map>,
+    mut query_world_map: ResMut<WorldMap>,
     mut query_viewshed: Query<&mut Viewshed>,
     mut query_game_state: Query<&mut components::GameState>,
 ) {
     // if using turn to move
-    let map = query_map.iter().nth(0).unwrap();
+    //let map = query_map.iter().nth(0).unwrap();
+    let px = query_player_world_pos.single().x;
+    let py = query_player_world_pos.single().y;
+    let map = &mut query_world_map
+        .maps
+        .iter_mut()
+        .filter(|m| m.world_pos.x == px && m.world_pos.y == py)
+        .nth(0)
+        .unwrap();
+
     let move_input = read_movement(input);
     if move_input.cmpeq(IVec2::ZERO).all() {
         return;
     }
 
-    let (entity, _) = player_pos //rename player_pos to another variable
+    let (entity, _) = player_pos //TODO: change query / iter / map - rename player_pos to another variable
         .iter_mut()
         .nth(0)
         .map(|(entity, player)| (entity, player))
@@ -112,6 +123,98 @@ pub fn player_walk(
 
     let next = curr + move_input;
 
+    // check if next is on the adjacent map
+    if next.x < 0 || next.x > MAP_WIDTH - 1 || next.y < 0 || next.y > MAP_HEIGHT - 1 {
+        // get map's world pos and idx of current map FROM
+        //curr_world_map_pos = map.world_pos;
+
+        // get world pos and idx of map we are moving TO
+
+        // moving to left
+        let mut next_map_pos = WorldPosition { x: 0, y: 0, z: 0 };
+        if next.x < 0 {
+            next_map_pos = WorldPosition {
+                x: &map.world_pos.x - 1,
+                y: map.world_pos.y,
+                z: map.world_pos.z,
+            };
+        }
+
+        // moving to right
+        if next.x > MAP_WIDTH - 1 {
+            next_map_pos = WorldPosition {
+                x: &map.world_pos.x + 1,
+                y: map.world_pos.y,
+                z: map.world_pos.z,
+            };
+        }
+
+        // moving down
+        if next.y < 0 {
+            next_map_pos = WorldPosition {
+                x: map.world_pos.x,
+                y: &map.world_pos.y - 1,
+                z: map.world_pos.z,
+            };
+        }
+
+        // moving up
+        if next.y > MAP_HEIGHT - 1 {
+            next_map_pos = WorldPosition {
+                x: map.world_pos.x,
+                y: &map.world_pos.y + 1,
+                z: map.world_pos.z,
+            };
+        }
+
+        // if the map we are moving TO already exists
+        if let Some(next_map) = query_world_map
+            //.single()
+            .maps
+            .iter()
+            .filter(|m| m.world_pos.x == next_map_pos.x && m.world_pos.y == next_map_pos.y)
+            .nth(0)
+        //.get(world_xy_idx(next_map_pos.x, next_map_pos.y))
+        {
+        } else {
+            // if does not exist, then generate it
+            // build new map
+            let mut new_map = Map::random();
+
+            // set map's worldmap pos
+            new_map.0.world_pos.x = next_map_pos.x;
+            new_map.0.world_pos.y = next_map_pos.y;
+            new_map.0.world_pos.z = next_map_pos.z;
+
+            // insert map into world map vector @ idx
+            query_world_map
+                //.single_mut()
+                .maps
+                .push(new_map.0);
+        }
+
+        // set the player's new world map location
+        let mut player_world_pos = query_player_world_pos.single_mut();
+        player_world_pos.x = next_map_pos.x;
+        player_world_pos.y = next_map_pos.y;
+        player_world_pos.z = next_map_pos.z;
+
+        // set the player's new map position
+        if next.y > MAP_HEIGHT - 1 {
+            pos.y = pos.y - MAP_HEIGHT + 1
+        };
+        if next.y < 0 {
+            pos.y = MAP_HEIGHT - 1
+        };
+        if next.x > MAP_WIDTH - 1 {
+            pos.x = pos.x - MAP_WIDTH + 1
+        };
+        if next.x < 2 {
+            pos.x = MAP_WIDTH - 1
+        };
+        return;
+    }
+    println!("nx: {:#?}, ny: {:#?}", next.x, next.y);
     // check if tile to be moved in to is in the list of blocked tiles
     if map.blocked_tiles[xy_idx(next.x, next.y)] {
         // if it is, then get the enemy that is blocking

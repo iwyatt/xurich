@@ -12,10 +12,22 @@ pub fn run_npc_ai(
     )>,
     mut query_game_state: Query<&mut components::GameState>,
     mut query_terminal: Query<&mut Terminal>,
-    mut query_map: Query<&mut Map>,
+    //mut query_map: Query<&mut Map>,
+    mut world_map: ResMut<WorldMap>,
+    query_player_world_position: Query<&WorldPosition, With<Player>>,
 ) {
     let mut terminal = query_terminal.iter_mut().nth(0).unwrap();
-    let mut map = query_map.iter_mut().nth(0).unwrap();
+    //let mut map = query_map.iter_mut().nth(0).unwrap();
+    let px = query_player_world_position.single().x;
+    let py = query_player_world_position.single().y;
+    //let map = &mut world_map.maps[world_xy_idx(px, py)];
+    let map = &mut world_map
+        .maps
+        .iter_mut()
+        .filter(|m| m.world_pos.x == px && m.world_pos.y == py)
+        .nth(0)
+        .unwrap();
+
     let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
 
     // skip if the game state is still paused
@@ -79,7 +91,8 @@ pub fn run_npc_ai(
                 let path = rltk::a_star_search(
                     xy_idx(pos.x, pos.y) as i32,
                     xy_idx(player_position.x, player_position.y) as i32,
-                    &mut *map,
+                    //&mut *map,
+                    *map,
                 );
                 //println!("path.steps.len(): {:#?}", path.steps.len());
 
