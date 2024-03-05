@@ -1,3 +1,5 @@
+use rltk::RandomNumberGenerator;
+
 use crate::components;
 pub use crate::prelude::*;
 
@@ -91,6 +93,7 @@ pub fn player_walk(
     mut query_world_map: ResMut<WorldMap>,
     mut query_viewshed: Query<&mut Viewshed>,
     mut query_game_state: Query<&mut components::GameState>,
+    mut query_rng: Query<&mut RNG>,
 ) {
     // if using turn to move
     //let map = query_map.iter().nth(0).unwrap();
@@ -129,6 +132,8 @@ pub fn player_walk(
         //curr_world_map_pos = map.world_pos;
 
         // get world pos and idx of map we are moving TO
+
+        // TODO: BUG: implement logic for when we are changing both X and Y at same time (diaganal moves between maps)
 
         // moving to left
         let mut next_map_pos = WorldPosition { x: 0, y: 0, z: 0 };
@@ -178,8 +183,13 @@ pub fn player_walk(
         {
         } else {
             // if does not exist, then generate it
+            let mut rng = query_rng.single_mut().to_owned();
+            let mut mapgen = MapGenerator::default();
+            mapgen.rng.0 = RandomNumberGenerator::seeded(
+                (&next.x + WORLD_MAP_WIDTH * &next.y + WORLD_MAP_HEIGHT) as u64,
+            );
             // build new map
-            let mut new_map = Map::random();
+            let mut new_map = Map::new_map_cellularautomata(mapgen);
 
             // set map's worldmap pos
             new_map.0.world_pos.x = next_map_pos.x;
@@ -209,12 +219,12 @@ pub fn player_walk(
         if next.x > MAP_WIDTH - 1 {
             pos.x = pos.x - MAP_WIDTH + 1
         };
-        if next.x < 2 {
+        if next.x < 0 {
             pos.x = MAP_WIDTH - 1
         };
         return;
     }
-    println!("nx: {:#?}, ny: {:#?}", next.x, next.y);
+    //println!("nx: {:#?}, ny: {:#?}", next.x, next.y);
     // check if tile to be moved in to is in the list of blocked tiles
     if map.blocked_tiles[xy_idx(next.x, next.y)] {
         // if it is, then get the enemy that is blocking

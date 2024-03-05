@@ -73,8 +73,7 @@ fn main() {
 fn setup(mut commands: Commands) {
     let mut myrng = RNG(RandomNumberGenerator::seeded(RNG_SEED)); // TODO: Change this to be a u64 hash of player name/year
                                                                   //commands.spawn(myrng);
-
-    // set the game state
+                                                                  // set the game state
     let game_state = components::GameState {
         runstate: RunState::Running,
     };
@@ -93,7 +92,8 @@ fn setup(mut commands: Commands) {
 
     //let (map, player_start_position, mob_start_positions, item_start_positions) = Map::random();
     let mapgen = MapGenerator::default();
-    let (map, player_start_position, mob_start_positions, item_start_positions) = Map::random();
+    let (map, player_start_position, mob_start_positions, item_start_positions) =
+        Map::random(&mut myrng);
     // TODO: move player and npc spawn into map generation
     // spawn player on map
     spawner::spawn_player(&mut commands, player_start_position);

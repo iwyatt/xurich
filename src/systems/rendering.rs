@@ -229,9 +229,14 @@ pub fn tick(
             .for_each(|e| {
                 terminal.put_string(
                     // TODO: impl smart positioning for edges of screen
-                    [mouse_map_pos.0, mouse_map_pos.1 + 1],
+                    [mouse_map_pos.0, mouse_map_pos.1 + 1].pivot(Pivot::Center),
                     e.2 .0.clone().fg(Color::WHITE),
-                )
+                );
+                println!(
+                    "tooltip x: {:#?}, tooltip y: {:#?}",
+                    mouse_map_pos.0,
+                    mouse_map_pos.1 + 1
+                );
             });
     }
 }

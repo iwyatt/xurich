@@ -185,9 +185,9 @@ impl Map {
         Map::new_map_roomsandcorridors(mapgen)
     }
 
-    pub fn random() -> (Map, Position, Vec<Position>, Vec<Position>) {
-        let mut mapgen = MapGenerator::default();
-        let map_type = mapgen.rng.0.roll_dice(1, 3);
+    pub fn random(rng: &mut RNG) -> (Map, Position, Vec<Position>, Vec<Position>) {
+        let mapgen = MapGenerator::default();
+        let map_type = rng.0.roll_dice(1, 3);
         let map = match map_type {
             1 => Map::new_map_roomsandcorridors(mapgen), // TODO: randomize the parameters in mapgen
             2 => Map::new_map_drunkardswalk(mapgen),     // TODO: randomize the parameters in mapgen
@@ -369,8 +369,9 @@ impl Map {
 
         // Now we'll randomly splat a bunch of walls. It won't be pretty, but it's a decent illustration.
         for _ in 0..(MAP_WIDTH * MAP_HEIGHT / mapgen.cell_density.unwrap() as i32) {
-            let x = mapgen.rng.0.roll_dice(1, MAP_WIDTH - 1);
-            let y = mapgen.rng.0.roll_dice(1, MAP_HEIGHT - 1);
+            let mut myrng = RandomNumberGenerator::new();
+            let x = myrng.roll_dice(1, MAP_WIDTH - 1);
+            let y = myrng.roll_dice(1, MAP_HEIGHT - 1);
             let idx = xy_idx(x, y);
             if idx != xy_idx(MAP_WIDTH / 2, MAP_HEIGHT / 2) {
                 //if wall position != middle of screen (player start)
