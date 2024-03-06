@@ -59,6 +59,7 @@ fn main() {
                 get_visible_tiles,
                 update_viewsheds,
                 tick,
+                render_statbar,
             )
                 .chain(),
         )
@@ -80,15 +81,26 @@ fn setup(mut commands: Commands) {
     commands.spawn(game_state);
 
     // define the play terminal
-    let term_size = [MAP_WIDTH, MAP_HEIGHT + 2]; // +2 for 2 lines of UI. Note this is 1-index, not 0-index unlike term.put_char
-                                                 // TODO: BUG: I suspect that the above is causing an issue with NPC_AI.rs pathing when player is on bottom row of map
+    let term_size = [MAP_WIDTH, MAP_HEIGHT];
+    // TODO: BUG: I suspect that the above is causing an issue with NPC_AI.rs pathing when player is on bottom row of map
+
     let terminal = Terminal::new(term_size).with_border(Border::single_line());
     let term_bundle = TerminalBundle::from(terminal);
 
     // create the terminal and camera
     commands
         .spawn((term_bundle, AutoCamera))
-        .insert(GameTerminal);
+        .insert(MapTerminal);
+
+    // stat bar
+    let mut term_statbar = Terminal::new([MAP_WIDTH, 1]).with_border(Border::single_line());
+    //term_statbar.put_string([0, 0], "Hello!");
+    commands
+        .spawn((
+            TerminalBundle::from(term_statbar).with_position([0, MAP_HEIGHT / 2 + 4]),
+            AutoCamera,
+        ))
+        .insert(StatBarTerminal);
 
     //let (map, player_start_position, mob_start_positions, item_start_positions) = Map::random();
     let mapgen = MapGenerator::default();

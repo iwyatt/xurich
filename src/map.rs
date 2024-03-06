@@ -369,7 +369,8 @@ impl Map {
 
         // Now we'll randomly splat a bunch of walls. It won't be pretty, but it's a decent illustration.
         for _ in 0..(MAP_WIDTH * MAP_HEIGHT / mapgen.cell_density.unwrap() as i32) {
-            let mut myrng = RandomNumberGenerator::new();
+            //let mut myrng = RandomNumberGenerator::new();
+            let mut myrng = &mut mapgen.rng.0;
             let x = myrng.roll_dice(1, MAP_WIDTH - 1);
             let y = myrng.roll_dice(1, MAP_HEIGHT - 1);
             let idx = xy_idx(x, y);
@@ -438,9 +439,12 @@ impl Map {
         // initialize item positions vector
         let mut item_start_pos = Vec::<Position>::new();
         // add items to random position in avialable tiles until number ofitems have been added
+
+        // TODO: This appears not to be random when transitioning maps
         while num_items > 0 {
             //let position = available_tiles[mapgen.rng.0.range(0, available_tiles.len())].clone();
-            let tile = available_tiles[mapgen.rng.0.range(0, available_tiles.len())];
+            let mut myrng = &mut mapgen.rng.0;
+            let tile = available_tiles[myrng.range(0, available_tiles.len())];
             let position = Position {
                 x: tile.x,
                 y: tile.y,

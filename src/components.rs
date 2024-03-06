@@ -2,7 +2,10 @@ use crate::prelude::*;
 use rltk::*;
 
 #[derive(Component)]
-pub struct GameTerminal;
+pub struct MapTerminal;
+
+#[derive(Component)]
+pub struct StatBarTerminal;
 
 // #[derive(Component)]
 // pub struct UI_Terminal;

@@ -14,26 +14,108 @@ fn render_game_over(mut terminal: Mut<'_, bevy_ascii_terminal::Terminal>) {
     );
 }
 
-// render update
-pub fn tick(
-    mut query_terminal: Query<&mut Terminal>,
-    query_entities: Query<(&Position, &Renderable, &crate::components::Name)>,
+pub fn render_statbar(
+    mut query_terminal: Query<&mut Terminal, With<StatBarTerminal>>,
     query_combat_stats: Query<&CombatStats, With<Player>>,
-    // query_maps: Query<&Map>,
-    mut world_map: ResMut<WorldMap>,
-    query_player_world_pos: Query<&WorldPosition, With<Player>>,
-    query_camera: Query<&TiledCamera>,
+    query_player_equipped_items: Query<&Renderable, With<IsEquipped>>,
     query_player_inventory: Query<(&Inventory, &Children), With<Player>>,
     query_player_inventory_items: Query<
         (&crate::components::Name, &Renderable),
         (With<Item>, Without<IsEquipped>),
     >,
-    query_player_equipped_items: Query<&Renderable, With<IsEquipped>>,
+) {
+    let mut statbar = query_terminal.iter_mut().nth(0).unwrap();
+    // render player stat bar
+    let player_combat_stats = query_combat_stats.single();
+    let line = [
+        "HP:",
+        &player_combat_stats.hp.to_string(),
+        "/",
+        &player_combat_stats.max_hp.to_string(),
+    ]
+    .join("");
+
+    let hp_line_length = line.len();
+    // TODO: Set the HP color to match the player character glyph color
+    //  which should be red/yellow/green depending on hp threshold
+    statbar.clear();
+    statbar.put_string([0, 0], line.fg(Color::WHITE));
+
+    // render player equipment
+    query_player_equipped_items.iter().for_each(|e| {
+        let (x, y) = if e.glyph == '♠' {
+            (MAP_WIDTH - 4, 0)
+        } else {
+            (MAP_WIDTH - 2, 0)
+        };
+        statbar.put_string([x, y], e.glyph.to_string().fg(e.fg));
+    });
+
+    // render player quick-inventory
+    if let Ok(pinventory) = query_player_inventory.get_single() {
+        // TODO : loop through  three items only and concatenate a big string
+        pinventory
+            .1
+            .iter()
+            .take(3)
+            .enumerate()
+            .for_each(|(quick_i, c)| {
+                if let Ok(i) = query_player_inventory_items.get(*c) {
+                    //let line = String::from("(") + quick_i.to_string().as_str() + ") " + (&i.0.to_string());
+                    statbar.put_string(
+                        [(hp_line_length as i32 + 1) + (quick_i as i32 * 4), 0],
+                        "(".fg(Color::WHITE),
+                    );
+
+                    statbar.put_string(
+                        [(hp_line_length as i32 + 1) + (quick_i as i32 * 4) + 1, 0],
+                        (quick_i + 1).to_string().fg(Color::WHITE),
+                    );
+
+                    statbar.put_string(
+                        [(hp_line_length as i32 + 1) + (quick_i as i32 * 4) + 2, 0],
+                        ")".fg(Color::WHITE),
+                    );
+
+                    statbar.put_string(
+                        [(hp_line_length as i32 + 1) + (quick_i as i32 * 4) + 3, 0],
+                        i.1.glyph.to_string().fg(i.1.fg),
+                    );
+
+                    // og)
+                    // let line = format!("({}) {}", quick_i + 1, i.0.0);
+                    // terminal.put_string(
+                    //     [15 * (quick_i + 1) as i32, MAP_HEIGHT + 0],
+                    //     line.fg(Color::WHITE),
+                    // );
+                }
+            });
+    }
+}
+
+// render update
+pub fn tick(
+    mut query_terminal: Query<&mut Terminal, With<MapTerminal>>,
+    //mut query_terminal: Query<(&mut Terminal, With<MapTerminal>, Option<&StatBarTerminal>)>,
+    query_entities: Query<(&Position, &Renderable, &crate::components::Name)>,
+    //query_combat_stats: Query<&CombatStats, With<Player>>,
+    // query_maps: Query<&Map>,
+    mut world_map: ResMut<WorldMap>,
+    query_player_world_pos: Query<&WorldPosition, With<Player>>,
+    query_camera: Query<&TiledCamera>,
+    //query_player_inventory: Query<(&Inventory, &Children), With<Player>>,
+    //query_player_inventory_items: Query<
+    //     (&crate::components::Name, &Renderable),
+    //     (With<Item>, Without<IsEquipped>),
+    // >,
+    //query_player_equipped_items: Query<&Renderable, With<IsEquipped>>,
     mut query_player_viewshed: Query<&mut Viewshed, With<Player>>,
     query_windows: Query<&Window, With<PrimaryWindow>>,
     query_gamestate: Query<&mut GameState>,
 ) {
     let mut terminal = query_terminal.iter_mut().nth(0).unwrap();
+    // let mut terminal = &query_terminal.iter_mut().filter(|t| {t.1.is_some()}).nth(0).unwrap().0;
+    // let mut statbar = &query_terminal.iter_mut().filter(|t| {t.2.is_some()}).nth(0).unwrap().0;
 
     if query_gamestate.single().runstate == RunState::GameOver {
         render_game_over(terminal);
@@ -100,84 +182,6 @@ pub fn tick(
         }
     });
 
-    // render player stat bar
-    let player_combat_stats = query_combat_stats.single();
-    let line = [
-        "HP:",
-        &player_combat_stats.hp.to_string(),
-        "/",
-        &player_combat_stats.max_hp.to_string(),
-    ]
-    .join("");
-
-    let hp_line_length = line.len();
-    // TODO: Set the HP color to match the player character glyph color
-    //  which should be red/yellow/green depending on hp threshold
-    terminal.put_string([0, MAP_HEIGHT + 1], line.fg(Color::WHITE));
-
-    // render player equipment
-    query_player_equipped_items.iter().for_each(|e| {
-        let (x, y) = if e.glyph == '♠' {
-            (MAP_WIDTH - 4, MAP_HEIGHT + 1)
-        } else {
-            (MAP_WIDTH - 2, MAP_HEIGHT + 1)
-        };
-        terminal.put_string([x, y], e.glyph.to_string().fg(e.fg));
-    });
-
-    // render player quick-inventory
-    if let Ok(pinventory) = query_player_inventory.get_single() {
-        // TODO : loop through  three items only and concatenate a big string
-        pinventory
-            .1
-            .iter()
-            .take(3)
-            .enumerate()
-            .for_each(|(quick_i, c)| {
-                if let Ok(i) = query_player_inventory_items.get(*c) {
-                    //let line = String::from("(") + quick_i.to_string().as_str() + ") " + (&i.0.to_string());
-                    terminal.put_string(
-                        [
-                            (hp_line_length as i32 + 1) + (quick_i as i32 * 4),
-                            MAP_HEIGHT + 1,
-                        ],
-                        "(".fg(Color::WHITE),
-                    );
-
-                    terminal.put_string(
-                        [
-                            (hp_line_length as i32 + 1) + (quick_i as i32 * 4) + 1,
-                            MAP_HEIGHT + 1,
-                        ],
-                        (quick_i + 1).to_string().fg(Color::WHITE),
-                    );
-
-                    terminal.put_string(
-                        [
-                            (hp_line_length as i32 + 1) + (quick_i as i32 * 4) + 2,
-                            MAP_HEIGHT + 1,
-                        ],
-                        ")".fg(Color::WHITE),
-                    );
-
-                    terminal.put_string(
-                        [
-                            (hp_line_length as i32 + 1) + (quick_i as i32 * 4) + 3,
-                            MAP_HEIGHT + 1,
-                        ],
-                        i.1.glyph.to_string().fg(i.1.fg),
-                    );
-
-                    // og)
-                    // let line = format!("({}) {}", quick_i + 1, i.0.0);
-                    // terminal.put_string(
-                    //     [15 * (quick_i + 1) as i32, MAP_HEIGHT + 0],
-                    //     line.fg(Color::WHITE),
-                    // );
-                }
-            });
-    }
-
     //render player and npcs
     query_entities.iter().for_each(|(pos, rend, _)| {
         if visible_tiles.contains(&Point::new(pos.x, pos.y)) {
@@ -241,8 +245,7 @@ pub fn tick(
     }
 }
 
-// add function to display received text at position for seconds
-
+// TOOLTIPS add function to display received text at position for seconds
 fn window_pos_to_map_pos(camera: &TiledCamera, mouse_pos: &Vec2) -> (i32, i32) {
     // TODO : bring in game desktop Window variables and convert mouse pos based on window size
     let camera_space_max_x = bevy_ascii_terminal::Size2d::width(&camera.viewport_size())
