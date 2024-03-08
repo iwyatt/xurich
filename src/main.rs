@@ -107,18 +107,28 @@ fn setup(mut commands: Commands) {
     let (map, player_start_position, mob_start_positions, item_start_positions) =
         Map::random(&mut myrng);
     // TODO: move player and npc spawn into map generation
-    // spawn player on map
+    // spawn player on map in world
     spawner::spawn_player(&mut commands, player_start_position);
 
     // spawn npc bundle
-    mob_start_positions
-        .iter()
-        .for_each(|pos| spawner::spawn_random_mob(&mut commands, pos.clone(), &mut myrng));
+    mob_start_positions.iter().for_each(|pos| {
+        spawner::spawn_random_mob(
+            &mut commands,
+            pos.clone(),
+            &mut myrng,
+            WorldPosition { x: 0, y: 0, z: 0 },
+        )
+    });
 
     // spawn item bundle
-    item_start_positions
-        .iter()
-        .for_each(|pos| spawner::spawn_random_item(&mut commands, pos.clone(), &mut myrng));
+    item_start_positions.iter().for_each(|pos| {
+        spawner::spawn_random_item(
+            &mut commands,
+            pos.clone(),
+            &mut myrng,
+            WorldPosition { x: 0, y: 0, z: 0 },
+        )
+    });
 
     // add map to worldmap resource
     let mut worldmap = WorldMap {

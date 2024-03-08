@@ -97,7 +97,12 @@ pub fn render_statbar(
 pub fn tick(
     mut query_terminal: Query<&mut Terminal, With<MapTerminal>>,
     //mut query_terminal: Query<(&mut Terminal, With<MapTerminal>, Option<&StatBarTerminal>)>,
-    query_entities: Query<(&Position, &Renderable, &crate::components::Name)>,
+    query_entities: Query<(
+        &Position,
+        &Renderable,
+        &crate::components::Name,
+        &WorldPosition,
+    )>,
     //query_combat_stats: Query<&CombatStats, With<Player>>,
     // query_maps: Query<&Map>,
     mut world_map: ResMut<WorldMap>,
@@ -182,10 +187,13 @@ pub fn tick(
         }
     });
 
-    //render player and npcs
-    query_entities.iter().for_each(|(pos, rend, _)| {
-        if visible_tiles.contains(&Point::new(pos.x, pos.y)) {
-            terminal.put_char([pos.x, pos.y], rend.glyph.fg(rend.fg).bg(rend.bg))
+    //render player and npcs and items
+
+    query_entities.iter().for_each(|(pos, rend, _, world_pos)| {
+        if world_pos == query_player_world_pos.single() {
+            if visible_tiles.contains(&Point::new(pos.x, pos.y)) {
+                terminal.put_char([pos.x, pos.y], rend.glyph.fg(rend.fg).bg(rend.bg))
+            }
         }
     });
 

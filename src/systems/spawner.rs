@@ -1,7 +1,12 @@
 use crate::prelude::*;
 use rltk::*;
 
-pub fn spawn_random_mob(commands: &mut Commands, position: Position, rng: &mut RNG) {
+pub fn spawn_random_mob(
+    commands: &mut Commands,
+    position: Position,
+    rng: &mut RNG,
+    world_pos: WorldPosition,
+) {
     // let mut rng = query_rng.single_mut();
     let roll = rng.0.roll_dice(1, 2);
     let (glyph, name) = match roll {
@@ -23,7 +28,8 @@ pub fn spawn_random_mob(commands: &mut Commands, position: Position, rng: &mut R
         })
         .insert(BlocksTile)
         .insert(Enemy)
-        .insert(Actor);
+        .insert(Actor)
+        .insert(world_pos);
 }
 
 pub fn spawn_player(commands: &mut Commands, position: Position) {
@@ -35,7 +41,12 @@ pub fn spawn_player(commands: &mut Commands, position: Position) {
         .insert(Inventory);
 }
 
-pub fn spawn_random_item(commands: &mut Commands, position: Position, rng: &mut RNG) {
+pub fn spawn_random_item(
+    commands: &mut Commands,
+    position: Position,
+    rng: &mut RNG,
+    world_pos: WorldPosition,
+) {
     // TODO: replace this RNG line with getting the world RNG resource
     //let mut rng = RNG(RandomNumberGenerator::seeded(RNG_SEED));
 
@@ -85,7 +96,8 @@ pub fn spawn_random_item(commands: &mut Commands, position: Position, rng: &mut 
         commands
             .spawn((name, renderable, item, position))
             .insert(Item)
-            .insert(Armor);
+            .insert(Armor)
+            .insert(world_pos);
         return;
     };
 

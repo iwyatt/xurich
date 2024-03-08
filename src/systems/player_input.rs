@@ -82,6 +82,7 @@ pub fn player_use_item(
 
 pub fn player_walk(
     input: Res<Input<KeyCode>>,
+    mut commands: Commands,
     mut ev_combat: EventWriter<CombatAttack>,
     //mut player_pos: Query<(Entity, &Player, &mut Position)>,
     mut entity_positions: Query<&mut Position>,
@@ -188,6 +189,10 @@ pub fn player_walk(
             mapgen.rng.0 = RandomNumberGenerator::seeded(
                 (&next.x + WORLD_MAP_WIDTH * &next.y + WORLD_MAP_HEIGHT) as u64,
             );
+            // println!(
+            //     "mapgen rng: {:#?}",
+            //     (&next.x + WORLD_MAP_WIDTH * &next.y + WORLD_MAP_HEIGHT) as u64
+            // );
             // build new map
             let mut new_map = Map::new_map_cellularautomata(mapgen);
 
@@ -195,6 +200,34 @@ pub fn player_walk(
             new_map.0.world_pos.x = next_map_pos.x;
             new_map.0.world_pos.y = next_map_pos.y;
             new_map.0.world_pos.z = next_map_pos.z;
+
+            // spawn npc bundle
+            new_map.2.iter().for_each(|pos| {
+                crate::spawner::spawn_random_mob(
+                    &mut commands,
+                    pos.clone(),
+                    &mut rng,
+                    WorldPosition {
+                        x: next_map_pos.x,
+                        y: next_map_pos.y,
+                        z: next_map_pos.z,
+                    },
+                )
+            });
+
+            // spawn item bundle
+            new_map.3.iter().for_each(|pos| {
+                crate::spawner::spawn_random_item(
+                    &mut commands,
+                    pos.clone(),
+                    &mut rng,
+                    WorldPosition {
+                        x: next_map_pos.x,
+                        y: next_map_pos.y,
+                        z: next_map_pos.z,
+                    },
+                )
+            });
 
             // insert map into world map vector @ idx
             query_world_map

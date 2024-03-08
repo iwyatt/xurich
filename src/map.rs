@@ -193,7 +193,7 @@ impl Map {
             2 => Map::new_map_drunkardswalk(mapgen),     // TODO: randomize the parameters in mapgen
             _ => Map::new_map_cellularautomata(mapgen),  // TODO: randomize the parameters in mapgen
         };
-        return map;
+        return (map);
     }
 
     pub fn new_map_roomsandcorridors(
@@ -368,9 +368,9 @@ impl Map {
         }
 
         // Now we'll randomly splat a bunch of walls. It won't be pretty, but it's a decent illustration.
+        let mut myrng = &mut mapgen.rng.0;
         for _ in 0..(MAP_WIDTH * MAP_HEIGHT / mapgen.cell_density.unwrap() as i32) {
             //let mut myrng = RandomNumberGenerator::new();
-            let mut myrng = &mut mapgen.rng.0;
             let x = myrng.roll_dice(1, MAP_WIDTH - 1);
             let y = myrng.roll_dice(1, MAP_HEIGHT - 1);
             let idx = xy_idx(x, y);

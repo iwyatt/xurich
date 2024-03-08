@@ -8,6 +8,7 @@ pub struct NPCBundle {
     pub marker: NPC_Type,
     pub viewshed: Viewshed,
     pub position: Position,
+    pub world_pos: WorldPosition,
     pub renderable: Renderable,
     pub stats: CombatStats,
     pub ai: NPC_AI,
@@ -44,6 +45,7 @@ impl Default for NPCBundle {
             ai: NPC_AI {
                 state: NPC_AI_State::Inactive,
             },
+            world_pos: WorldPosition { x: 0, y: 0, z: 0 },
         }
     }
 }
