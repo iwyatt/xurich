@@ -1,4 +1,6 @@
 //pub use crate::prelude::*;
+pub mod gameover;
+pub mod newgame;
 pub mod npc_ai;
 pub mod player_input;
 pub mod rendering;

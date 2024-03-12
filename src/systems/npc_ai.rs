@@ -15,6 +15,8 @@ pub fn run_npc_ai(
     //mut query_map: Query<&mut Map>,
     mut world_map: ResMut<WorldMap>,
     query_player_world_position: Query<&WorldPosition, With<Player>>,
+    gamestate: Res<State<GameLoopState>>,
+    mut next_state: ResMut<NextState<GameLoopState>>,
 ) {
     let mut terminal = query_terminal.iter_mut().nth(0).unwrap();
     //let mut map = query_map.iter_mut().nth(0).unwrap();
@@ -30,12 +32,15 @@ pub fn run_npc_ai(
 
     let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
 
+    // TODO: Remove this game_state nonsense after fully implementing GameLoopState
     // skip if the game state is still paused
     if game_state.runstate == components::RunState::Paused {
         return;
     };
+
     // otherwise set the game state to paused regardless of monter ai outcome
     game_state.runstate = RunState::Paused;
+    next_state.set(GameLoopState::PlayerTurn);
 
     // set player entity id and position
     let mut player_position = Position { x: 0, y: 0 };

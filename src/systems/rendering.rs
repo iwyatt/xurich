@@ -7,12 +7,12 @@ use Terminal;
 use super::player_input::GameState;
 
 // game over fn
-fn render_game_over(mut terminal: Mut<'_, bevy_ascii_terminal::Terminal>) {
-    terminal.put_string(
-        [MAP_WIDTH / 2, MAP_HEIGHT / 2].pivot(Pivot::Center),
-        "YOUR QUEST HAS ENDED".fg(Color::BLACK).bg(Color::WHITE),
-    );
-}
+// fn render_game_over(mut terminal: Mut<'_, bevy_ascii_terminal::Terminal>) {
+//     terminal.put_string(
+//         [MAP_WIDTH / 2, MAP_HEIGHT / 2].pivot(Pivot::Center),
+//         "YOUR QUEST HAS ENDED".fg(Color::BLACK).bg(Color::WHITE),
+//     );
+// }
 
 pub fn render_statbar(
     mut query_terminal: Query<&mut Terminal, With<StatBarTerminal>>,
@@ -122,10 +122,10 @@ pub fn tick(
     // let mut terminal = &query_terminal.iter_mut().filter(|t| {t.1.is_some()}).nth(0).unwrap().0;
     // let mut statbar = &query_terminal.iter_mut().filter(|t| {t.2.is_some()}).nth(0).unwrap().0;
 
-    if query_gamestate.single().runstate == RunState::GameOver {
-        render_game_over(terminal);
-        return;
-    };
+    // if query_gamestate.single().runstate == RunState::GameOver {
+    //     render_game_over(terminal);
+    //     return;
+    // };
     //let map = query_maps.iter().nth(0).unwrap();
     //let player_world_pos = query_player_world_pos.single();
     // let map = query_maps

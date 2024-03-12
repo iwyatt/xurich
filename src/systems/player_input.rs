@@ -9,6 +9,8 @@ pub use crate::prelude::*;
 pub fn player_wait(
     input: Res<Input<KeyCode>>,
     mut query_game_state: Query<&mut components::GameState>,
+    gamestate: Res<State<GameLoopState>>,
+    mut next_state: ResMut<NextState<GameLoopState>>,
 ) {
     if !input.just_pressed(KeyCode::S) {
         return;
@@ -16,12 +18,15 @@ pub fn player_wait(
     // end of player's turn: switch game state so NPCs can take their turn
     let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
     game_state.runstate = RunState::Running;
+    next_state.set(GameLoopState::NPCTurn);
 }
 
 pub fn player_get_item(
     input: Res<Input<KeyCode>>,
     mut ev_itempickup: EventWriter<EV_ItemPickUp>,
     query_entity: Query<(Entity, &Position, With<Player>)>,
+    gamestate: Res<State<GameLoopState>>,
+    mut next_state: ResMut<NextState<GameLoopState>>,
 ) {
     if !input.just_pressed(KeyCode::G) {
         return;
@@ -36,6 +41,7 @@ pub fn player_get_item(
     };
     //println!("player_itempickup: {:#?}", &item_pickup);
     ev_itempickup.send(item_pickup);
+    next_state.set(GameLoopState::NPCTurn);
 }
 
 pub fn player_use_item(
@@ -43,6 +49,8 @@ pub fn player_use_item(
     mut ev_itemuse: EventWriter<EV_ItemUse>,
     query_inventory: Query<(Entity, &Inventory, &Children), With<Player>>,
     query_items: Query<&crate::components::Name>,
+    gamestate: Res<State<GameLoopState>>,
+    mut next_state: ResMut<NextState<GameLoopState>>,
 ) {
     //println!("input: {:#?}", input);
     // only do something if inventory slot = key pressed slot
@@ -75,6 +83,7 @@ pub fn player_use_item(
                         item: *c,
                     };
                     ev_itemuse.send(item_use);
+                    next_state.set(GameLoopState::NPCTurn);
                 }
             });
     }
@@ -95,6 +104,8 @@ pub fn player_walk(
     mut query_viewshed: Query<&mut Viewshed>,
     mut query_game_state: Query<&mut components::GameState>,
     mut query_rng: Query<&mut RNG>,
+    gamestate: Res<State<GameLoopState>>,
+    mut next_state: ResMut<NextState<GameLoopState>>,
 ) {
     // if using turn to move
     //let map = query_map.iter().nth(0).unwrap();
@@ -291,7 +302,10 @@ pub fn player_walk(
 
     // end of player's turn: switch game state so NPCs can take their turn
     let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
+
+    // TODO: Remove this game state after full implementation of GameLoopState
     game_state.runstate = RunState::Running;
+    next_state.set(GameLoopState::NPCTurn);
 }
 
 // an IVec2 is a 2-dimensional vector (direction and distance for x and y both)

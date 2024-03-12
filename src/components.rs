@@ -2,6 +2,41 @@ use crate::prelude::*;
 use rltk::*;
 
 #[derive(Component)]
+pub struct InitialEntity;
+
+#[derive(States, Default, Debug, Clone, PartialEq, Eq, Hash)]
+pub enum GameLoopState {
+    #[default]
+    Initialization,
+    NewGame,
+    // Main Game Loop
+    PlayerTurn,
+    // Player Turn Interstitial States:
+    Inventory,
+    // LevelUp
+    // ViewMap
+    // Enemy/NPC/MOB Turn:
+    NPCTurn,
+    // End Game States:
+    Defeat,
+    // Victory,
+}
+
+// TODO: Remove Run State and GameState when GameLoopState is fully implemented
+#[derive(PartialEq, Copy, Clone, Debug)]
+pub enum RunState {
+    Paused,
+    Running,
+    GameOver,
+}
+
+#[derive(Component, Copy, Clone, Debug)]
+pub struct GameState {
+    //pub ecs: World,
+    pub runstate: RunState,
+}
+
+#[derive(Component)]
 pub struct MapTerminal;
 
 #[derive(Component)]
@@ -92,19 +127,6 @@ pub struct Viewshed {
     pub visible_tiles: Vec<rltk::Point>,
     pub range: i32,
     pub dirty: bool,
-}
-
-#[derive(Component, Copy, Clone, Debug)]
-pub struct GameState {
-    //pub ecs: World,
-    pub runstate: RunState,
-}
-
-#[derive(PartialEq, Copy, Clone, Debug)]
-pub enum RunState {
-    Paused,
-    Running,
-    GameOver,
 }
 
 #[derive(Component, Debug)]

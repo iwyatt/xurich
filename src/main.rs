@@ -23,14 +23,16 @@ mod prelude {
 use crate::events::combat::resolve_combat_events;
 use crate::events::inventory::ev_pickup_item;
 use crate::events::inventory::ev_use_item;
-use rltk::*;
-
 use crate::systems::npc_ai::run_npc_ai;
 use crate::systems::player_input::player_get_item;
 use crate::systems::player_input::player_use_item;
 use crate::systems::player_input::player_wait;
 use crate::systems::player_input::player_walk;
 use crate::systems::rendering::*;
+use rltk::*;
+use systems::gameover;
+use systems::gameover::*;
+use systems::newgame::*;
 use systems::spawner;
 
 use crate::viewsheds::get_visible_tiles;
@@ -39,47 +41,108 @@ use crate::viewsheds::update_viewsheds;
 use prelude::*;
 
 fn main() {
-    App::new()
+    #[rustfmt::skip]
+    let mut app = App::new()
+        // add plugins
         .add_plugins((DefaultPlugins, TerminalPlugin))
+        // initialize resources
+        //.init_resource::<State<GameLoopState>>()
+        // add state
+        .add_state::<GameLoopState>()
+        // configure Startup systems
         .add_systems(Startup, setup)
+        .add_systems(Update, init_new_game.run_if(in_state(GameLoopState::NewGame)))
+        // configure Update systems
         .add_systems(
             Update,
             (
-                MapIndexingSystem::run,
-                player_get_item,
-                player_use_item,
-                ev_pickup_item,
-                ev_use_item,
-                player_walk,
-                player_wait,
-                get_visible_tiles,
-                update_viewsheds,
-                run_npc_ai,
-                resolve_combat_events,
-                get_visible_tiles,
-                update_viewsheds,
-                tick,
-                render_statbar,
-            )
-                .chain(),
+                // Systems running on Player's Turn
+                (
+                    MapIndexingSystem::run,
+                    player_get_item,
+                    player_use_item,
+                    ev_pickup_item,
+                    ev_use_item,
+                    player_walk,
+                    player_wait,
+                    get_visible_tiles,
+                    update_viewsheds,
+                    tick,
+                    render_statbar,
+                    resolve_combat_events,
+                )
+                    .run_if(in_state(GameLoopState::PlayerTurn)),
+                // // TODO: Inventory Screen, Input, Events
+                // // Systems running on Player Inventory Screen
+                // (
+                //
+                // )
+                // .in_set(GameLoop::Inventory),
+
+                // Systems Running on NPC's Turn
+                (
+                    run_npc_ai,
+                    update_viewsheds,
+                    resolve_combat_events,
+                    tick,
+                    render_statbar,
+                )
+                    .run_if(in_state(GameLoopState::NPCTurn)),
+                
+                // Systems Running on Player Death
+                (
+                    //render_statbar,
+                    gameover::player_input,
+                    gameover::render_game_over
+                )
+                    .run_if(in_state(GameLoopState::Defeat)),
+            ),
         )
+        // register event processing
         .add_event::<CombatAttack>()
         .add_event::<EV_ItemPickUp>()
         .add_event::<EV_ItemUse>()
-        //.add_systems(Update, tick)
+        // run the app!
         .run();
+
+    // App::new()
+    //     .add_plugins((DefaultPlugins, TerminalPlugin))
+    //     .add_systems(Startup, setup)
+    //     .add_systems(
+    //         Update,
+    //         (
+    //             MapIndexingSystem::run,
+    //             player_get_item,
+    //             player_use_item,
+    //             ev_pickup_item,
+    //             ev_use_item,
+    //             player_walk,
+    //             player_wait,
+    //             get_visible_tiles,
+    //             update_viewsheds,
+    //             run_npc_ai,
+    //             resolve_combat_events,
+    //             get_visible_tiles,
+    //             update_viewsheds,
+    //             tick,
+    //             render_statbar,
+    //         )
+    //         .chain(),
+    //     )
+    //     .add_event::<CombatAttack>()
+    //     .add_event::<EV_ItemPickUp>()
+    //     .add_event::<EV_ItemUse>()
+    //     //.add_systems(Update, tick)
+    //     .run();
 }
 
 // set up loop
-fn setup(mut commands: Commands) {
-    let mut myrng = RNG(RandomNumberGenerator::seeded(RNG_SEED)); // TODO: Change this to be a u64 hash of player name/year
-                                                                  //commands.spawn(myrng);
-                                                                  // set the game state
-    let game_state = components::GameState {
-        runstate: RunState::Running,
-    };
-    commands.spawn(game_state);
-
+fn setup(
+    mut commands: Commands,
+    gamestate: Res<State<GameLoopState>>,
+    mut next_state: ResMut<NextState<GameLoopState>>,
+    entities: Query<Entity>,
+) {
     // define the play terminal
     let term_size = [MAP_WIDTH, MAP_HEIGHT];
     // TODO: BUG: I suspect that the above is causing an issue with NPC_AI.rs pathing when player is on bottom row of map
@@ -89,7 +152,8 @@ fn setup(mut commands: Commands) {
 
     // create the terminal and camera
     commands
-        .spawn((term_bundle, AutoCamera))
+        .spawn((term_bundle, AutoCamera, InitialEntity))
+        .insert(InitialEntity)
         .insert(MapTerminal);
 
     // stat bar
@@ -99,44 +163,18 @@ fn setup(mut commands: Commands) {
         .spawn((
             TerminalBundle::from(term_statbar).with_position([0, MAP_HEIGHT / 2 + 4]),
             AutoCamera,
+            InitialEntity,
         ))
-        .insert(StatBarTerminal);
+        .insert(StatBarTerminal)
+        .insert(InitialEntity);
 
-    //let (map, player_start_position, mob_start_positions, item_start_positions) = Map::random();
-    let mapgen = MapGenerator::default();
-    let (map, player_start_position, mob_start_positions, item_start_positions) =
-        Map::random(&mut myrng);
-    // TODO: move player and npc spawn into map generation
-    // spawn player on map in world
-    spawner::spawn_player(&mut commands, player_start_position);
+    // add all these entities into set of initial entities that we do not want cleared on New Game
+    for entity in entities.iter() {
+        commands.entity(entity).insert(InitialEntity);
+    }
+    next_state.set(GameLoopState::NewGame);
+}
 
-    // spawn npc bundle
-    mob_start_positions.iter().for_each(|pos| {
-        spawner::spawn_random_mob(
-            &mut commands,
-            pos.clone(),
-            &mut myrng,
-            WorldPosition { x: 0, y: 0, z: 0 },
-        )
-    });
-
-    // spawn item bundle
-    item_start_positions.iter().for_each(|pos| {
-        spawner::spawn_random_item(
-            &mut commands,
-            pos.clone(),
-            &mut myrng,
-            WorldPosition { x: 0, y: 0, z: 0 },
-        )
-    });
-
-    // add map to worldmap resource
-    let mut worldmap = WorldMap {
-        maps: Vec::<Map>::with_capacity(WORLD_MAP_HEIGHT as usize * WORLD_MAP_WIDTH as usize),
-    };
-    //let mapidx = world_xy_idx(map.world_pos.x, map.world_pos.y);
-    worldmap.maps.push(map);
-    commands.insert_resource(worldmap);
-    //commands.spawn(map);
-    commands.spawn(myrng);
+fn debug(gamestate: Res<State<GameLoopState>>) {
+    println!("gameloopstate: {:#?}", gamestate);
 }

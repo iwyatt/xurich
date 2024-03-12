@@ -7,6 +7,8 @@ pub fn resolve_combat_events(
     mut ev_combat: EventReader<CombatAttack>,
     mut query_rng: Query<&mut RNG>,
     mut query_game_state: Query<&mut GameState>,
+    gamestate: Res<State<GameLoopState>>,
+    mut next_state: ResMut<NextState<GameLoopState>>,
 ) {
     let mut rng = query_rng.single_mut();
     let mut actors: Vec<(Entity, &Actor, &CombatStats)> = Vec::new();
@@ -19,18 +21,23 @@ pub fn resolve_combat_events(
 
     for e in ev_combat.read() {
         // println!("e in ev_combat.iter(): {:#?}", e);
-        let mut target = query_actors.get_mut(e.target).unwrap();
-        target.2.hp -= rng.0.roll_dice(e.damage.0, e.damage.1);
-        println!("target.1.hp: {:#?}", target.2.hp);
-        if target.2.hp <= 0 {
-            if target.0 == query_player.single() {
-                let mut game_state = query_game_state.single_mut();
+        if let Err(mut target) = query_actors.get_mut(e.target) {
+            return;
+        } else {
+            let mut target = query_actors.get_mut(e.target).unwrap();
+            target.2.hp -= rng.0.roll_dice(e.damage.0, e.damage.1);
+            println!("target.1.hp: {:#?}", target.2.hp);
+            if target.2.hp <= 0 {
+                if target.0 == query_player.single() {
+                    let mut game_state = query_game_state.single_mut();
 
-                // TODO: should consider sending game state change to an event system
-                game_state.runstate = RunState::GameOver;
-                //println!("player died");
-            } else {
-                commands.entity(e.target).despawn();
+                    // TODO: should consider sending game state change to an event system
+                    game_state.runstate = RunState::GameOver;
+                    next_state.set(GameLoopState::Defeat);
+                    //println!("player died");
+                } else {
+                    commands.entity(e.target).despawn();
+                }
             }
         }
     }
