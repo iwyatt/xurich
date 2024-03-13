@@ -10,17 +10,19 @@ use Terminal;
 pub fn player_input(
     input: Res<Input<KeyCode>>,
     mut commands: Commands,
-    mut query_entities: Query<Entity, Without<InitialEntity>>,
+    mut query_entities: Query<Entity, (Without<InitialEntity>, Without<Parent>)>,
     gamestate: Res<State<GameLoopState>>,
     mut next_state: ResMut<NextState<GameLoopState>>,
+    //mut world: &mut World,
 ) {
     if input.just_pressed(KeyCode::N) {
-        println!("new game key pressed");
+        //println!("new game key pressed");
 
         // clear entities
         for entity in query_entities.iter_mut() {
             println!("removing entities: {:#?}", entity);
             commands.entity(entity).despawn_recursive();
+            //world.clear_entities();
         }
         next_state.set(GameLoopState::NewGame);
     }

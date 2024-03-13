@@ -7,7 +7,14 @@ pub fn init_new_game(
     gamestate: Res<State<GameLoopState>>,
     mut next_state: ResMut<NextState<GameLoopState>>,
     entities: Query<Entity>,
+    mut query_terminals: Query<&mut Terminal>,
 ) {
+    // new games dont have border for some reason, 
+    // need to figure out why and how to add them back
+    // for mut terminal in query_terminals.iter_mut() {
+    //     terminal.set_border(Border::single_line());
+    // }
+
     // begin world building // TODO: Split this off into second setup function
     let mut myrng = RNG(RandomNumberGenerator::seeded(RNG_SEED)); // TODO: Change this to be a u64 hash of player name/year
                                                                   //commands.spawn(myrng);

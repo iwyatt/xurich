@@ -67,9 +67,9 @@ fn main() {
                     player_wait,
                     get_visible_tiles,
                     update_viewsheds,
+                    resolve_combat_events,
                     tick,
                     render_statbar,
-                    resolve_combat_events,
                 )
                     .run_if(in_state(GameLoopState::PlayerTurn)),
                 // // TODO: Inventory Screen, Input, Events
