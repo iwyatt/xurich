@@ -93,7 +93,8 @@ fn main() {
                 (
                     //render_statbar,
                     gameover::player_input,
-                    gameover::render_game_over
+                    gameover::render_game_over,
+                    render_statbar,
                 )
                     .run_if(in_state(GameLoopState::Defeat)),
             ),

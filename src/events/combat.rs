@@ -21,6 +21,8 @@ pub fn resolve_combat_events(
 
     for e in ev_combat.read() {
         // println!("e in ev_combat.iter(): {:#?}", e);
+        // need to make sure target still exists since when starting a new game, the
+        // event system may not have cleared
         if let Err(mut target) = query_actors.get_mut(e.target) {
             return;
         } else {

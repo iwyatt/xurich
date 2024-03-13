@@ -27,6 +27,7 @@ pub fn player_get_item(
     query_entity: Query<(Entity, &Position, With<Player>)>,
     gamestate: Res<State<GameLoopState>>,
     mut next_state: ResMut<NextState<GameLoopState>>,
+    mut query_game_state: Query<&mut components::GameState>,
 ) {
     if !input.just_pressed(KeyCode::G) {
         return;
@@ -41,6 +42,8 @@ pub fn player_get_item(
     };
     //println!("player_itempickup: {:#?}", &item_pickup);
     ev_itempickup.send(item_pickup);
+    let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
+    game_state.runstate = RunState::Running;
     next_state.set(GameLoopState::NPCTurn);
 }
 
@@ -49,6 +52,7 @@ pub fn player_use_item(
     mut ev_itemuse: EventWriter<EV_ItemUse>,
     query_inventory: Query<(Entity, &Inventory, &Children), With<Player>>,
     query_items: Query<&crate::components::Name>,
+    mut query_game_state: Query<&mut components::GameState>,
     gamestate: Res<State<GameLoopState>>,
     mut next_state: ResMut<NextState<GameLoopState>>,
 ) {
@@ -83,6 +87,8 @@ pub fn player_use_item(
                         item: *c,
                     };
                     ev_itemuse.send(item_use);
+                    let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
+                    game_state.runstate = RunState::Running;
                     next_state.set(GameLoopState::NPCTurn);
                 }
             });

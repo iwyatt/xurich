@@ -20,7 +20,7 @@ pub fn player_input(
 
         // clear entities
         for entity in query_entities.iter_mut() {
-            println!("removing entities: {:#?}", entity);
+            //println!("removing entities: {:#?}", entity);
             commands.entity(entity).despawn_recursive();
             //world.clear_entities();
         }
@@ -44,21 +44,4 @@ pub fn render_game_over(mut query_terminal: Query<&mut Terminal, With<MapTermina
             .fg(Color::WHITE)
             .bg(Color::BLACK),
     );
-}
-
-fn clean_up(
-    mut commands: Commands,
-    mut query_entities: Query<Entity>,
-    query_gamestate: Query<&mut GameState>,
-    mut world_map: Res<WorldMap>,
-) {
-    for entity in query_entities.iter_mut() {
-        commands.entity(entity).despawn_recursive();
-    }
-    // if query_gamestate.single().runstate == RunState::GameOver {
-    //     query_entities
-    //         .iter_mut()
-    //         .for_each(|e| commands.entity(e).despawn());
-    //     commands.remove_resource::<WorldMap>();
-    // }
 }

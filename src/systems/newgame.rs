@@ -9,7 +9,7 @@ pub fn init_new_game(
     entities: Query<Entity>,
     mut query_terminals: Query<&mut Terminal>,
 ) {
-    // new games dont have border for some reason, 
+    // new games dont have border for some reason,
     // need to figure out why and how to add them back
     // for mut terminal in query_terminals.iter_mut() {
     //     terminal.set_border(Border::single_line());
