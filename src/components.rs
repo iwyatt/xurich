@@ -1,6 +1,15 @@
 use crate::prelude::*;
 use rltk::*;
 
+#[derive(Component, Event)]
+pub struct EV_OpenInventoryTerminal;
+
+#[derive(Component, Event)]
+pub struct EV_CloseInventoryTerminal;
+
+#[derive(Component)]
+pub struct InventoryTerminal;
+
 #[derive(Component)]
 pub struct InitialEntity;
 

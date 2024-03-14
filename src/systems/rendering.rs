@@ -4,16 +4,64 @@ use bevy_ascii_terminal::*;
 use rltk::*;
 use Terminal;
 
-use super::player_input::GameState;
+// GAME STATE: Inventory
+pub fn inventory(
+    mut query_terminal: Query<&mut Terminal, With<InventoryTerminal>>,
+    query_player_inventory: Query<(&Inventory, &Children), With<Player>>,
+    query_player_inventory_items: Query<
+        (&crate::components::Name, &Renderable, Option<&IsEquipped>),
+        (With<Item>),
+    >,
+) {
+    if let Some(mut terminal) = query_terminal.iter_mut().nth(0) {
+        terminal.clear();
+        terminal.put_string(
+            [0, (MAP_HEIGHT / 2) - 1].pivot(Pivot::Center),
+            "LEGEND: * = Equipped Items / 1, 2, 3.. = Quick-Use Number"
+                .fg(Color::BLACK)
+                .bg(Color::WHITE),
+        );
 
-// game over fn
-// fn render_game_over(mut terminal: Mut<'_, bevy_ascii_terminal::Terminal>) {
-//     terminal.put_string(
-//         [MAP_WIDTH / 2, MAP_HEIGHT / 2].pivot(Pivot::Center),
-//         "YOUR QUEST HAS ENDED".fg(Color::BLACK).bg(Color::WHITE),
-//     );
-// }
+        terminal.put_string(
+            [0, -(MAP_HEIGHT / 2)].pivot(Pivot::Center),
+            "Commands: (U)se/Equip / (D)rop Item / (1..5) Quick Slot / (I)nventory Close"
+                .fg(Color::BLACK)
+                .bg(Color::WHITE),
+        );
 
+        // iterate through inventory if it exists
+        if let Ok(pinventory) = query_player_inventory.get_single() {
+            pinventory.1.iter().enumerate().for_each(|(e, c)| {
+                if let Ok(i) = query_player_inventory_items.get(*c) {
+                    //let line = String::from("(") + quick_i.to_string().as_str() + ") " + (&i.0.to_string());
+
+                    // indicate if item is equipped
+                    if i.2.is_some() {
+                        terminal
+                            .put_string([1, 2 * e + 1].pivot(Pivot::TopLeft), "*".fg(Color::WHITE))
+                    }
+
+                    // TODO: Render Cursor "[ ]" position
+
+                    // put item glyph
+                    terminal.put_string(
+                        [4, 2 * e + 1].pivot(Pivot::TopLeft),
+                        i.1.glyph.to_string().fg(i.1.fg),
+                    );
+
+                    // put name of item
+                    let i_name = i.0 .0.clone();
+                    terminal.put_string(
+                        [7, 2 * e + 1].pivot(Pivot::TopLeft),
+                        i_name.fg(Color::WHITE),
+                    );
+                }
+            })
+        }
+    }
+}
+
+// render statbar
 pub fn render_statbar(
     mut query_terminal: Query<&mut Terminal, With<StatBarTerminal>>,
     query_combat_stats: Query<&CombatStats, With<Player>>,
@@ -116,9 +164,10 @@ pub fn tick(
     //query_player_equipped_items: Query<&Renderable, With<IsEquipped>>,
     mut query_player_viewshed: Query<&mut Viewshed, With<Player>>,
     query_windows: Query<&Window, With<PrimaryWindow>>,
-    query_gamestate: Query<&mut GameState>,
+    //query_gamestate: Query<&mut crate::components::GameState>,
 ) {
-    let mut terminal = query_terminal.iter_mut().nth(0).unwrap();
+    //let mut terminal = query_terminal.iter_mut().nth(0).unwrap();
+    let mut terminal = query_terminal.single_mut();
     // let mut terminal = &query_terminal.iter_mut().filter(|t| {t.1.is_some()}).nth(0).unwrap().0;
     // let mut statbar = &query_terminal.iter_mut().filter(|t| {t.2.is_some()}).nth(0).unwrap().0;
 

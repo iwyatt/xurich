@@ -1,11 +1,38 @@
-use rltk::RandomNumberGenerator;
-
 use crate::components;
-pub use crate::prelude::*;
+use crate::prelude::*;
+use rltk::RandomNumberGenerator;
 
 // TODO : Refactor so that keyboard input capture is just one function
 //  and flows the program to other functions as appropriate
 
+// Game State Player Inventory
+pub fn player_inventory_screen(
+    //commands: Commands,
+    input: Res<Input<KeyCode>>,
+    //mut next_state: ResMut<NextState<GameLoopState>>,
+    gamestate: Res<State<GameLoopState>>,
+    mut query_game_state: Query<&mut components::GameState>,
+    mut ev_open_inventory: EventWriter<EV_OpenInventoryTerminal>,
+    mut ev_close_inventory: EventWriter<EV_CloseInventoryTerminal>,
+) {
+    if !input.just_pressed(KeyCode::I) {
+        return;
+    };
+
+    if *gamestate.get() == GameLoopState::Inventory {
+        println!("closing inventory");
+        ev_close_inventory.send(EV_CloseInventoryTerminal);
+        let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
+        game_state.runstate = RunState::Running;
+    } else {
+        ev_open_inventory.send(EV_OpenInventoryTerminal);
+    }
+    // let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
+    // game_state.runstate = RunState::Running;
+    // next_state.set(GameLoopState::Inventory);
+}
+
+// Game State Player Turn
 pub fn player_wait(
     input: Res<Input<KeyCode>>,
     mut query_game_state: Query<&mut components::GameState>,

@@ -1,5 +1,72 @@
-pub use crate::prelude::*;
+use crate::prelude::*;
 
+// game state: Inventory
+
+// open inventory
+pub fn ev_open_inventory(
+    mut commands: Commands,
+    mut ev_open_inv: EventReader<EV_OpenInventoryTerminal>,
+    //gamestate: Res<State<GameLoopState>>,
+    //mut query_game_state: Query<&mut components::GameState>,
+    mut next_state: ResMut<NextState<GameLoopState>>,
+    mut query_map_terminal: Query<(Entity, &mut Terminal), With<MapTerminal>>,
+    //mut ev_open_inventory: EventWriter<EV_OpenInventoryTerminal>,
+) {
+    for event in ev_open_inv.read() {
+        println!("ev_open_inv");
+
+        let mut map_terminal = query_map_terminal.single_mut();
+        // map_terminal.clear();
+        // create a terminal for inventory
+        // define the play terminal
+        let term_size = [MAP_WIDTH, MAP_HEIGHT];
+        // TODO: BUG: I suspect that the above is causing an issue with NPC_AI.rs pathing when player is on bottom row of map
+
+        let terminal =
+            Terminal::new(term_size).with_border(Border::single_line().with_title("Inventory"));
+        let term_bundle = TerminalBundle::from(terminal);
+
+        // create the terminal and camera
+        commands
+            .spawn((term_bundle, AutoCamera))
+            .insert(InventoryTerminal);
+
+        //let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
+        //game_state.runstate = RunState::Running;
+        next_state.set(GameLoopState::Inventory);
+        commands.entity(map_terminal.0).despawn_recursive();
+    }
+}
+
+// close inventory
+pub fn ev_close_inventory(
+    mut commands: Commands,
+    mut ev_close_inv: EventReader<EV_CloseInventoryTerminal>,
+    mut query_inv_terminal: Query<(Entity, &mut Terminal), With<InventoryTerminal>>,
+    mut next_state: ResMut<NextState<GameLoopState>>,
+) {
+    for event in ev_close_inv.read() {
+        println!("ev_close_inv");
+        // define the play terminal
+        let term_size = [MAP_WIDTH, MAP_HEIGHT];
+
+        let terminal = Terminal::new(term_size).with_border(Border::single_line());
+        let term_bundle = TerminalBundle::from(terminal);
+
+        // create the terminal and camera
+        commands
+            .spawn((term_bundle, AutoCamera, InitialEntity))
+            .insert(InitialEntity)
+            .insert(MapTerminal);
+
+        let mut inv_terminal = query_inv_terminal.single_mut();
+        commands.entity(inv_terminal.0).despawn_recursive();
+        next_state.set(GameLoopState::NPCTurn);
+    }
+}
+
+// game state: Player Turn
+// pickup item
 pub fn ev_pickup_item(
     mut commands: Commands,
     query_inventory: Query<(Entity, &Inventory)>,

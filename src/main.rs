@@ -21,10 +21,13 @@ mod prelude {
     //use rltk::*;
 }
 use crate::events::combat::resolve_combat_events;
+use crate::events::inventory::ev_close_inventory;
+use crate::events::inventory::ev_open_inventory;
 use crate::events::inventory::ev_pickup_item;
 use crate::events::inventory::ev_use_item;
 use crate::systems::npc_ai::run_npc_ai;
 use crate::systems::player_input::player_get_item;
+use crate::systems::player_input::player_inventory_screen;
 use crate::systems::player_input::player_use_item;
 use crate::systems::player_input::player_wait;
 use crate::systems::player_input::player_walk;
@@ -33,6 +36,7 @@ use rltk::*;
 use systems::gameover;
 use systems::gameover::*;
 use systems::newgame::*;
+use systems::rendering;
 use systems::spawner;
 
 use crate::viewsheds::get_visible_tiles;
@@ -59,10 +63,12 @@ fn main() {
                 // Systems running on Player's Turn
                 (
                     MapIndexingSystem::run,
+                    player_inventory_screen,
                     player_get_item,
                     player_use_item,
                     ev_pickup_item,
                     ev_use_item,
+                    ev_open_inventory,
                     player_walk,
                     player_wait,
                     get_visible_tiles,
@@ -72,12 +78,19 @@ fn main() {
                     render_statbar,
                 )
                     .run_if(in_state(GameLoopState::PlayerTurn)),
-                // // TODO: Inventory Screen, Input, Events
-                // // Systems running on Player Inventory Screen
-                // (
-                //
-                // )
-                // .in_set(GameLoop::Inventory),
+                
+                // TODO: Inventory Screen, Input, Events
+                // Systems running on Player Inventory Screen
+                (
+                 rendering::inventory,
+                 ev_close_inventory,
+                 //render_statbar,
+                 //ev_use_item,
+                 //ev_equip_item,
+                 //ev_drop_item,
+                 player_inventory_screen,
+                )
+                    .run_if(in_state(GameLoopState::Inventory)),
 
                 // Systems Running on NPC's Turn
                 (
@@ -103,6 +116,8 @@ fn main() {
         .add_event::<CombatAttack>()
         .add_event::<EV_ItemPickUp>()
         .add_event::<EV_ItemUse>()
+        .add_event::<EV_OpenInventoryTerminal>()
+        .add_event::<EV_CloseInventoryTerminal>()
         // run the app!
         .run();
 
