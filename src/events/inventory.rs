@@ -26,6 +26,10 @@ pub fn ev_open_inventory(
             Terminal::new(term_size).with_border(Border::single_line().with_title("Inventory"));
         let term_bundle = TerminalBundle::from(terminal);
 
+        // create the inventory cursor
+        let cursor = InventoryCursor { pos: 0 };
+        commands.spawn(cursor);
+
         // create the terminal and camera
         commands
             .spawn((term_bundle, AutoCamera))
@@ -41,6 +45,7 @@ pub fn ev_open_inventory(
 // close inventory
 pub fn ev_close_inventory(
     mut commands: Commands,
+    mut query_cursor: Query<Entity, With<InventoryCursor>>,
     mut ev_close_inv: EventReader<EV_CloseInventoryTerminal>,
     mut query_inv_terminal: Query<(Entity, &mut Terminal), With<InventoryTerminal>>,
     mut next_state: ResMut<NextState<GameLoopState>>,
@@ -61,6 +66,15 @@ pub fn ev_close_inventory(
 
         let mut inv_terminal = query_inv_terminal.single_mut();
         commands.entity(inv_terminal.0).despawn_recursive();
+
+        // despawn the cursor
+        // TODO: if we added the cursor as a child of the terminal when opening it, would the above despawn it?
+        for mut cursor in query_cursor.iter_mut() {
+            commands.entity(cursor).despawn_recursive();
+            //println!("remove cursor!");
+        }
+
+        // set next game state
         next_state.set(GameLoopState::NPCTurn);
     }
 }

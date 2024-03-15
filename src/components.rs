@@ -8,6 +8,11 @@ pub struct EV_OpenInventoryTerminal;
 pub struct EV_CloseInventoryTerminal;
 
 #[derive(Component)]
+pub struct InventoryCursor {
+    pub pos: i32,
+}
+
+#[derive(Component)]
 pub struct InventoryTerminal;
 
 #[derive(Component)]

@@ -26,6 +26,7 @@ use crate::events::inventory::ev_open_inventory;
 use crate::events::inventory::ev_pickup_item;
 use crate::events::inventory::ev_use_item;
 use crate::systems::npc_ai::run_npc_ai;
+use crate::systems::player_input::inventory_cursor;
 use crate::systems::player_input::player_get_item;
 use crate::systems::player_input::player_inventory_screen;
 use crate::systems::player_input::player_use_item;
@@ -83,6 +84,7 @@ fn main() {
                 // Systems running on Player Inventory Screen
                 (
                  rendering::inventory,
+                 inventory_cursor,
                  ev_close_inventory,
                  //render_statbar,
                  //ev_use_item,

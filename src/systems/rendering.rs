@@ -6,6 +6,7 @@ use Terminal;
 
 // GAME STATE: Inventory
 pub fn inventory(
+    query_cursor: Query<&InventoryCursor>,
     mut query_terminal: Query<&mut Terminal, With<InventoryTerminal>>,
     query_player_inventory: Query<(&Inventory, &Children), With<Player>>,
     query_player_inventory_items: Query<
@@ -13,6 +14,7 @@ pub fn inventory(
         (With<Item>),
     >,
 ) {
+    let cursor = query_cursor.single();
     if let Some(mut terminal) = query_terminal.iter_mut().nth(0) {
         terminal.clear();
         terminal.put_string(
@@ -41,7 +43,17 @@ pub fn inventory(
                             .put_string([1, 2 * e + 1].pivot(Pivot::TopLeft), "*".fg(Color::WHITE))
                     }
 
-                    // TODO: Render Cursor "[ ]" position
+                    // Render Cursor "[ ]" position
+                    if e as i32 == cursor.pos {
+                        terminal.put_string(
+                            [3, 2 * e + 1].pivot(Pivot::TopLeft),
+                            "[".fg(Color::SILVER),
+                        );
+                        terminal.put_string(
+                            [5, 2 * e + 1].pivot(Pivot::TopLeft),
+                            "]".fg(Color::SILVER),
+                        );
+                    }
 
                     // put item glyph
                     terminal.put_string(
@@ -73,6 +85,7 @@ pub fn render_statbar(
     >,
 ) {
     let mut statbar = query_terminal.iter_mut().nth(0).unwrap();
+
     // render player stat bar
     let player_combat_stats = query_combat_stats.single();
     let line = [

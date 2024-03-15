@@ -6,6 +6,76 @@ use rltk::RandomNumberGenerator;
 //  and flows the program to other functions as appropriate
 
 // Game State Player Inventory
+pub fn inventory_cursor(
+    input: Res<Input<KeyCode>>,
+    mut query_cursor: Query<&mut InventoryCursor>,
+    query_player_inventory: Query<(&Inventory, &Children), With<Player>>,
+    // query_player_inventory_items: Query<
+    //     (&crate::components::Name, &Renderable, Option<&IsEquipped>),
+    //     (With<Item>),
+    // >,
+) {
+    // navigate inventory cursor
+    let mut cursor = query_cursor.single_mut();
+    let mut num_inventory_items = 0;
+
+    if let Ok(pinventory) = query_player_inventory.get_single() {
+        num_inventory_items = pinventory.1.iter().len() as i32;
+    }
+
+    //println!("inventory count: {}", num_inventory_items);
+    //let num_inventory_items = query_player_inventory_items.iter().len() as i32 - 1; // make this an index
+    if input.just_pressed(KeyCode::Down) {
+        // println!(
+        //     "query_player_inventory.length() {}",
+        //     query_player_inventory.iter().len()
+        // );
+        // println!(
+        //     "old cursor.pos: {}, index_length_inventory_items: {}",
+        //     cursor.pos, num_inventory_items
+        // );
+        // TODO: this works when num inventory > 1, but not for == 1
+        if cursor.pos + 1 >= num_inventory_items {
+            cursor.pos = num_inventory_items - 1
+        } else {
+            cursor.pos += 1;
+        }
+        //println!("new cursor.pos: {}", cursor.pos);
+    }
+
+    if input.just_pressed(KeyCode::Up) {
+        if cursor.pos - 1 <= 0 {
+            cursor.pos = 0
+        } else {
+            cursor.pos -= 1
+        }
+    }
+
+    if input.just_pressed(KeyCode::Left) {
+        if cursor.pos - 10 < 0 {
+            cursor.pos = 0
+        }
+        // TODO: the jump between columns of the cursor needs to be
+        //  based on the number of items in the rendered column.
+        //  the above assumes there is 10 items per column
+        else {
+            cursor.pos -= 10
+        }
+    }
+
+    if input.just_pressed(KeyCode::Right) {
+        if cursor.pos + 10 > num_inventory_items {
+            cursor.pos = num_inventory_items - 1
+        }
+        // TODO: the jump between columns of the cursor needs to be
+        //  based on the number of items in the rendered column.
+        //  the above assumes there is 10 items per column
+        else {
+            cursor.pos += 10
+        }
+    }
+}
+
 pub fn player_inventory_screen(
     //commands: Commands,
     input: Res<Input<KeyCode>>,
@@ -15,18 +85,21 @@ pub fn player_inventory_screen(
     mut ev_open_inventory: EventWriter<EV_OpenInventoryTerminal>,
     mut ev_close_inventory: EventWriter<EV_CloseInventoryTerminal>,
 ) {
-    if !input.just_pressed(KeyCode::I) {
-        return;
+    //let move_input = read_movement(input);
+    // if move_input.cmpeq(IVec2::ZERO).all() {
+    //     return;
+    // }
+    if input.just_pressed(KeyCode::I) {
+        if *gamestate.get() == GameLoopState::Inventory {
+            println!("closing inventory");
+            ev_close_inventory.send(EV_CloseInventoryTerminal);
+            let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
+            game_state.runstate = RunState::Running;
+        } else {
+            ev_open_inventory.send(EV_OpenInventoryTerminal);
+        }
     };
 
-    if *gamestate.get() == GameLoopState::Inventory {
-        println!("closing inventory");
-        ev_close_inventory.send(EV_CloseInventoryTerminal);
-        let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
-        game_state.runstate = RunState::Running;
-    } else {
-        ev_open_inventory.send(EV_OpenInventoryTerminal);
-    }
     // let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
     // game_state.runstate = RunState::Running;
     // next_state.set(GameLoopState::Inventory);
