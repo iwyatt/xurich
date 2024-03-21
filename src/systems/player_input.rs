@@ -6,6 +6,35 @@ use rltk::RandomNumberGenerator;
 //  and flows the program to other functions as appropriate
 
 // Game State Player Inventory
+pub fn player_inventory_screen(
+    //commands: Commands,
+    input: Res<Input<KeyCode>>,
+    //mut next_state: ResMut<NextState<GameLoopState>>,
+    gamestate: Res<State<GameLoopState>>,
+    mut query_game_state: Query<&mut components::GameState>,
+    mut ev_open_inventory: EventWriter<EV_OpenInventoryTerminal>,
+    mut ev_close_inventory: EventWriter<EV_CloseInventoryTerminal>,
+) {
+    //let move_input = read_movement(input);
+    // if move_input.cmpeq(IVec2::ZERO).all() {
+    //     return;
+    // }
+    if input.just_pressed(KeyCode::I) {
+        if *gamestate.get() == GameLoopState::Inventory {
+            println!("closing inventory");
+            ev_close_inventory.send(EV_CloseInventoryTerminal);
+            let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
+            game_state.runstate = RunState::Running;
+        } else {
+            ev_open_inventory.send(EV_OpenInventoryTerminal);
+        }
+    };
+
+    // let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
+    // game_state.runstate = RunState::Running;
+    // next_state.set(GameLoopState::Inventory);
+}
+
 pub fn inventory_cursor(
     input: Res<Input<KeyCode>>,
     mut query_cursor: Query<&mut InventoryCursor>,
@@ -19,7 +48,9 @@ pub fn inventory_cursor(
     let mut cursor = query_cursor.single_mut();
     let mut num_inventory_items = 0;
 
+    // get the player's inventory
     if let Ok(pinventory) = query_player_inventory.get_single() {
+        // get the number of the player's inventory items
         num_inventory_items = pinventory.1.iter().len() as i32;
     }
 
@@ -34,7 +65,6 @@ pub fn inventory_cursor(
         //     "old cursor.pos: {}, index_length_inventory_items: {}",
         //     cursor.pos, num_inventory_items
         // );
-        // TODO: this works when num inventory > 1, but not for == 1
         if cursor.pos + 1 >= num_inventory_items {
             cursor.pos = num_inventory_items - 1
         } else {
@@ -76,77 +106,41 @@ pub fn inventory_cursor(
     }
 }
 
-pub fn player_inventory_screen(
-    //commands: Commands,
+pub fn inventory_use(
     input: Res<Input<KeyCode>>,
-    //mut next_state: ResMut<NextState<GameLoopState>>,
-    gamestate: Res<State<GameLoopState>>,
-    mut query_game_state: Query<&mut components::GameState>,
-    mut ev_open_inventory: EventWriter<EV_OpenInventoryTerminal>,
-    mut ev_close_inventory: EventWriter<EV_CloseInventoryTerminal>,
+    mut ev_itemuse: EventWriter<EV_ItemUse>,
+    query_inventory: Query<(Entity, &Inventory, &Children), With<Player>>,
+    query_items: Query<&crate::components::Name>,
+    query_cursor: Query<&InventoryCursor>,
 ) {
-    //let move_input = read_movement(input);
-    // if move_input.cmpeq(IVec2::ZERO).all() {
-    //     return;
-    // }
-    if input.just_pressed(KeyCode::I) {
-        if *gamestate.get() == GameLoopState::Inventory {
-            println!("closing inventory");
-            ev_close_inventory.send(EV_CloseInventoryTerminal);
-            let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
-            game_state.runstate = RunState::Running;
-        } else {
-            ev_open_inventory.send(EV_OpenInventoryTerminal);
-        }
-    };
+    if input.just_pressed(KeyCode::U) {
+        let cursor = query_cursor.single();
+        if let Ok(pinventory) = query_inventory.get_single() {
+            pinventory
+                .2
+                .iter()
+                .enumerate()
+                .filter(|(e, _)| *e == cursor.pos as usize)
+                .for_each(|(_, c)| {
+                    // println!("pinventory.2.iter().for_each(|c {:#?}", pinventory.2);
 
-    // let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
-    // game_state.runstate = RunState::Running;
-    // next_state.set(GameLoopState::Inventory);
+                    if let Ok(_) = query_items.get(*c) {
+                        // println!("item: {:#?}", i);
+                        let item_use = EV_ItemUse {
+                            source: pinventory.0,
+                            item: *c,
+                        };
+                        ev_itemuse.send(item_use);
+                        // let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
+                        // game_state.runstate = RunState::Running;
+                        // next_state.set(GameLoopState::NPCTurn);
+                    }
+                });
+        }
+    }
 }
 
 // Game State Player Turn
-pub fn player_wait(
-    input: Res<Input<KeyCode>>,
-    mut query_game_state: Query<&mut components::GameState>,
-    gamestate: Res<State<GameLoopState>>,
-    mut next_state: ResMut<NextState<GameLoopState>>,
-) {
-    if !input.just_pressed(KeyCode::S) {
-        return;
-    };
-    // end of player's turn: switch game state so NPCs can take their turn
-    let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
-    game_state.runstate = RunState::Running;
-    next_state.set(GameLoopState::NPCTurn);
-}
-
-pub fn player_get_item(
-    input: Res<Input<KeyCode>>,
-    mut ev_itempickup: EventWriter<EV_ItemPickUp>,
-    query_entity: Query<(Entity, &Position, With<Player>)>,
-    gamestate: Res<State<GameLoopState>>,
-    mut next_state: ResMut<NextState<GameLoopState>>,
-    mut query_game_state: Query<&mut components::GameState>,
-) {
-    if !input.just_pressed(KeyCode::G) {
-        return;
-    };
-    let (entity, position, _) = query_entity.single();
-    let item_pickup: EV_ItemPickUp = EV_ItemPickUp {
-        target: entity,
-        position: Position {
-            x: position.x,
-            y: position.y,
-        },
-    };
-    //println!("player_itempickup: {:#?}", &item_pickup);
-    ev_itempickup.send(item_pickup);
-    let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
-    game_state.runstate = RunState::Running;
-    next_state.set(GameLoopState::NPCTurn);
-}
-
 pub fn player_use_item(
     input: Res<Input<KeyCode>>,
     mut ev_itemuse: EventWriter<EV_ItemUse>,
@@ -193,6 +187,47 @@ pub fn player_use_item(
                 }
             });
     }
+}
+
+pub fn player_wait(
+    input: Res<Input<KeyCode>>,
+    mut query_game_state: Query<&mut components::GameState>,
+    gamestate: Res<State<GameLoopState>>,
+    mut next_state: ResMut<NextState<GameLoopState>>,
+) {
+    if !input.just_pressed(KeyCode::S) {
+        return;
+    };
+    // end of player's turn: switch game state so NPCs can take their turn
+    let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
+    game_state.runstate = RunState::Running;
+    next_state.set(GameLoopState::NPCTurn);
+}
+
+pub fn player_get_item(
+    input: Res<Input<KeyCode>>,
+    mut ev_itempickup: EventWriter<EV_ItemPickUp>,
+    query_entity: Query<(Entity, &Position, With<Player>)>,
+    gamestate: Res<State<GameLoopState>>,
+    mut next_state: ResMut<NextState<GameLoopState>>,
+    mut query_game_state: Query<&mut components::GameState>,
+) {
+    if !input.just_pressed(KeyCode::G) {
+        return;
+    };
+    let (entity, position, _) = query_entity.single();
+    let item_pickup: EV_ItemPickUp = EV_ItemPickUp {
+        target: entity,
+        position: Position {
+            x: position.x,
+            y: position.y,
+        },
+    };
+    //println!("player_itempickup: {:#?}", &item_pickup);
+    ev_itempickup.send(item_pickup);
+    let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
+    game_state.runstate = RunState::Running;
+    next_state.set(GameLoopState::NPCTurn);
 }
 
 pub fn player_walk(

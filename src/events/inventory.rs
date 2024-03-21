@@ -168,6 +168,7 @@ pub fn ev_use_item(
 
         // equipment // TODO: Update so that Armor can be equipped
         if let Some(equipment) = equipment {
+            println!("equipment bundle: {:#?}", equipment);
             // TODO: if there is an item of the same type already equipped
 
             // if there are any equipped weapons
@@ -248,7 +249,6 @@ pub fn ev_use_item(
         }
     }
 }
-
 // when player presses the num key corresponding to an unequipped item in inventory
 pub fn equip_item(
     commands: Commands,
