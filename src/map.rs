@@ -79,7 +79,7 @@ impl Default for MapGenerator {
             room_size_range: Some((2, 10)),
             rooms_range: Some((4, (MAP_HEIGHT * MAP_WIDTH / 400).try_into().unwrap())),
             mobs_range: (1, (MAP_HEIGHT * MAP_WIDTH / 200).try_into().unwrap()),
-            items_range: (10, (MAP_HEIGHT * MAP_WIDTH / 200).try_into().unwrap()), // TODO: change min range for testing
+            items_range: (0, (MAP_HEIGHT * MAP_WIDTH / 300).try_into().unwrap()), // TODO: change min range for testing
             cell_density: Some((MAP_HEIGHT * MAP_WIDTH / 400) as usize),
         }
     }
@@ -440,7 +440,6 @@ impl Map {
         let mut item_start_pos = Vec::<Position>::new();
         // add items to random position in avialable tiles until number ofitems have been added
 
-        // TODO: This appears not to be random when transitioning maps
         while num_items > 0 {
             //let position = available_tiles[mapgen.rng.0.range(0, available_tiles.len())].clone();
             let mut myrng = &mut mapgen.rng.0;

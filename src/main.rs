@@ -131,36 +131,6 @@ fn main() {
         .add_event::<EV_CloseInventoryTerminal>()
         // run the app!
         .run();
-
-    // App::new()
-    //     .add_plugins((DefaultPlugins, TerminalPlugin))
-    //     .add_systems(Startup, setup)
-    //     .add_systems(
-    //         Update,
-    //         (
-    //             MapIndexingSystem::run,
-    //             player_get_item,
-    //             player_use_item,
-    //             ev_pickup_item,
-    //             ev_use_item,
-    //             player_walk,
-    //             player_wait,
-    //             get_visible_tiles,
-    //             update_viewsheds,
-    //             run_npc_ai,
-    //             resolve_combat_events,
-    //             get_visible_tiles,
-    //             update_viewsheds,
-    //             tick,
-    //             render_statbar,
-    //         )
-    //         .chain(),
-    //     )
-    //     .add_event::<CombatAttack>()
-    //     .add_event::<EV_ItemPickUp>()
-    //     .add_event::<EV_ItemUse>()
-    //     //.add_systems(Update, tick)
-    //     .run();
 }
 
 // set up loop
@@ -200,8 +170,4 @@ fn setup(
         commands.entity(entity).insert(InitialEntity);
     }
     next_state.set(GameLoopState::NewGame);
-}
-
-fn debug(gamestate: Res<State<GameLoopState>>) {
-    println!("gameloopstate: {:#?}", gamestate);
 }
