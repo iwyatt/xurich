@@ -22,8 +22,10 @@ mod prelude {
 }
 use crate::events::combat::resolve_combat_events;
 use crate::events::inventory::ev_close_inventory;
+use crate::events::inventory::ev_drop_item;
 use crate::events::inventory::ev_open_inventory;
 use crate::events::inventory::ev_pickup_item;
+use crate::events::inventory::ev_unequip_item;
 use crate::events::inventory::ev_use_item;
 use crate::systems::npc_ai::run_npc_ai;
 use crate::systems::player_input::inventory_cursor;
@@ -87,7 +89,10 @@ fn main() {
                  inventory_cursor,
                  ev_close_inventory,
                  systems::player_input::inventory_use,
+                 systems::player_input::inventory_drop,
                  ev_use_item,
+                 ev_drop_item,
+                 ev_unequip_item,
                  render_statbar,
                  //ev_use_item,
                  //ev_equip_item,
@@ -120,6 +125,8 @@ fn main() {
         .add_event::<CombatAttack>()
         .add_event::<EV_ItemPickUp>()
         .add_event::<EV_ItemUse>()
+        .add_event::<EV_ItemDrop>()
+        .add_event::<EV_ItemUnequip>()
         .add_event::<EV_OpenInventoryTerminal>()
         .add_event::<EV_CloseInventoryTerminal>()
         // run the app!

@@ -7,6 +7,19 @@ pub struct EV_OpenInventoryTerminal;
 #[derive(Component, Event)]
 pub struct EV_CloseInventoryTerminal;
 
+#[derive(Component, Event)]
+pub struct EV_ItemDrop {
+    pub actor: Entity,
+    pub item: Entity,
+    pub position: Position,
+}
+
+#[derive(Component, Event)]
+pub struct EV_ItemUnequip {
+    pub actor: Entity,
+    pub item: Entity,
+}
+
 #[derive(Component)]
 pub struct InventoryCursor {
     pub pos: i32,

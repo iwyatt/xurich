@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use crate::components;
 use crate::prelude::*;
 use rltk::RandomNumberGenerator;
@@ -136,6 +138,55 @@ pub fn inventory_use(
                         // next_state.set(GameLoopState::NPCTurn);
                     }
                 });
+        }
+    }
+}
+
+pub fn inventory_drop(
+    //commands: Commands,
+    input: Res<Input<KeyCode>>,
+    mut ev_itemdrop: EventWriter<EV_ItemDrop>,
+    query_player_pos: Query<(&Position), With<Player>>,
+    query_inventory: Query<(Entity, &Inventory, &Children), With<Player>>,
+    query_items: Query<&crate::components::Name>,
+    mut query_cursor: Query<&mut InventoryCursor>,
+) {
+    if input.just_pressed(KeyCode::D) {
+        let mut item_dropped = false;
+        let mut cursor = query_cursor.single_mut();
+        if let Ok(pinventory) = query_inventory.get_single() {
+            pinventory
+                .2
+                .iter()
+                .enumerate()
+                .filter(|(e, _)| *e == cursor.pos as usize)
+                .for_each(|(_, c)| {
+                    // println!("pinventory.2.iter().for_each(|c {:#?}", pinventory.2);
+
+                    if let Ok(_) = query_items.get(*c) {
+                        // println!("item: {:#?}", i);
+                        let pos = query_player_pos.single();
+                        let item_drop = EV_ItemDrop {
+                            actor: pinventory.0,
+                            item: *c,
+                            position: Position { x: pos.x, y: pos.y },
+                        };
+
+                        ev_itemdrop.send(item_drop);
+                        item_dropped = true;
+                        // let mut game_state = query_game_state.iter_mut().nth(0).unwrap();
+                        // game_state.runstate = RunState::Running;
+                        // next_state.set(GameLoopState::NPCTurn);
+                    }
+                });
+        }
+        // if an item was dropped, then move the cursor up one
+        if item_dropped {
+            if cursor.pos - 1 <= 0 {
+                cursor.pos = 0
+            } else {
+                cursor.pos -= 1
+            }
         }
     }
 }

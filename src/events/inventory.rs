@@ -124,6 +124,44 @@ pub fn ev_pickup_item(
     }
 }
 
+pub fn ev_drop_item(
+    mut ev_drop_item: EventReader<EV_ItemDrop>,
+    mut ev_unequip_item: EventWriter<EV_ItemUnequip>,
+    mut commands: Commands,
+    // query_inventory: Query<(Entity, &Inventory)>,
+    // query_items: Query<(Entity, &Position), With<Item>>,
+    // query_player_position: Query<&Position, With<Player>>,
+    query_equipped: Query<
+        (
+            Entity,
+            Option<&Weapon>,
+            Option<&Armor>,
+            Option<&EquipmentBundle>,
+        ),
+        With<IsEquipped>,
+    >,
+) {
+    for event in ev_drop_item.read() {
+        // if item is equipped, unequip it first
+        if query_equipped.contains(event.item) {
+            ev_unequip_item.send(EV_ItemUnequip {
+                actor: event.actor,
+                item: event.item,
+            });
+        }
+
+        // remove the item's parent, which is the inventory it is currently attached to
+        commands.entity(event.item).remove_parent();
+
+        // give the item a position
+        // which, if it also has a Renderable, then it will be rendered
+        commands.entity(event.item).insert(Position {
+            x: event.position.x,
+            y: event.position.y,
+        });
+    }
+}
+
 pub fn ev_use_item(
     mut commands: Commands,
     mut ev_use_item: EventReader<EV_ItemUse>,
@@ -189,34 +227,36 @@ pub fn ev_use_item(
                         commands.entity(e.0).remove::<IsEquipped>();
 
                         // remove the parent inventory
-                        commands.entity(e.0).remove_parent();
+                        //commands.entity(e.0).remove_parent();
 
                         // drop item at player's position
-                        let pos = query_player_position.single();
-                        commands.entity(e.0).insert(Position { x: pos.x, y: pos.y });
+                        //let pos = query_player_position.single();
+                        //commands.entity(e.0).insert(Position { x: pos.x, y: pos.y });
                     }
+                }
 
-                    // if both the new item is a weapon and also there is a weapon equipped
-                    if isarmor.is_some() && e.3.is_some() {
-                        // if the old item weapon has a equipment bundle
-                        if let Some(item) = e.3 {
-                            //remove item by lowering combat stats
-                            println!("removing old weapon pre-removal stats: {:#?}", stats);
-                            stats.power -= item.stat_bonus.power;
-                            stats.defense -= item.stat_bonus.defense;
-                            stats.max_hp -= item.stat_bonus.max_hp;
-                            println!("removing old weapon post-removal stats: {:#?}", stats);
+                // if both the new item is a weapon and also there is a weapon equipped
+                println!("isarmor: {:#?}", isarmor);
+                println!("e.3.is_some(): {:#?}", e.3);
+                if isarmor.is_some() && e.3.is_some() {
+                    // if the old item weapon has a equipment bundle
+                    if let Some(item) = e.3 {
+                        //remove item by lowering combat stats
+                        println!("removing old armor pre-removal stats: {:#?}", stats);
+                        stats.power -= item.stat_bonus.power;
+                        stats.defense -= item.stat_bonus.defense;
+                        stats.max_hp -= item.stat_bonus.max_hp;
+                        println!("removing old armor post-removal stats: {:#?}", stats);
 
-                            // remove the isequipped tag
-                            commands.entity(e.0).remove::<IsEquipped>();
+                        // remove the isequipped tag
+                        commands.entity(e.0).remove::<IsEquipped>();
 
-                            // remove the parent inventory
-                            commands.entity(e.0).remove_parent();
+                        // remove the parent inventory
+                        //commands.entity(e.0).remove_parent();
 
-                            // drop item at player's position
-                            let pos = query_player_position.single();
-                            commands.entity(e.0).insert(Position { x: pos.x, y: pos.y });
-                        }
+                        // drop item at player's position
+                        //let pos = query_player_position.single();
+                        //commands.entity(e.0).insert(Position { x: pos.x, y: pos.y });
                     }
                 }
             });
@@ -264,14 +304,35 @@ pub fn equip_item(
     // remove item from 'usable' inventory
 }
 
-// when player presses the num key corresponding to an unequipped item in inventory
-fn ev_unequip_item(
-    commands: Commands,
-    //mut ev_use_item: EventReader<EV_ItemUnequip>,
-    query_items: Query<(Entity, &EquipmentBundle, &IsEquipped), With<Player>>,
-    mut query_combat_stats: Query<(Entity, &mut CombatStats), With<Player>>,
+// process event requests to unequip an item
+pub fn ev_unequip_item(
+    mut commands: Commands,
+    mut ev_unequip_item: EventReader<EV_ItemUnequip>,
+    //mut query_combat_stats: Query<(Entity, &mut CombatStats)>,
+    mut query_combat_stats: Query<&mut CombatStats>,
+    query_equip_bundle: Query<&EquipmentBundle>,
 ) {
-    // remove IsEquipped tag for renderer to pick up
-    // update combat stats to reflect removed item
-    // drop removed item on ground near player
+    for event in ev_unequip_item.read() {
+        let item_stats = query_equip_bundle
+            .get(event.item)
+            .map(|equipment| &equipment.stat_bonus)
+            .unwrap();
+
+        // get the combat stats for the player and the item being unequipped
+        //  - note that .get_many_mut() returns entities in the order in which you specify
+        let mut player_stats = query_combat_stats.get_mut(event.actor).unwrap();
+        // let [mut player_stats, item_stats] = query_combat_stats
+        //     .get_many_mut([event.actor, event.item])
+        //     .unwrap();
+
+        // subtract stats of item from the player's stats
+        println!("player stats before removing item: {:#?}", player_stats);
+        player_stats.power -= item_stats.power;
+        player_stats.defense -= item_stats.defense;
+        player_stats.max_hp -= item_stats.max_hp;
+        println!("player stats after removing item:  {:#?}", player_stats);
+
+        // remove the isequipped tag
+        commands.entity(event.item).remove::<IsEquipped>();
+    }
 }
