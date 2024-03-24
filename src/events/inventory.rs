@@ -285,7 +285,7 @@ pub fn ev_use_item(
             stats.hp = stats.max_hp.min(stats.hp + potion.heal_amount);
 
             // remove potion from inventory
-            commands.entity(entity).despawn();
+            commands.entity(entity).despawn_recursive();
         }
     }
 }

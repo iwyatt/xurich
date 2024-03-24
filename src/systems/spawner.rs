@@ -72,7 +72,7 @@ pub fn spawn_random_item(
                     },
                 };
                 (name, renderable, item)
-            },
+            }
 
             26..=46 => {
                 let name = Name(String::from("Enchanted Leather Jerkin"));
@@ -90,7 +90,7 @@ pub fn spawn_random_item(
                     },
                 };
                 (name, renderable, item)
-            },
+            }
 
             47..=62 => {
                 let name = Name(String::from("Magic Chain Mail"));
@@ -108,7 +108,7 @@ pub fn spawn_random_item(
                     },
                 };
                 (name, renderable, item)
-            },
+            }
             63..=75 => {
                 let name = Name(String::from("Splint Mail"));
                 let renderable = Renderable {
@@ -125,7 +125,7 @@ pub fn spawn_random_item(
                     },
                 };
                 (name, renderable, item)
-            },
+            }
             76..=85 => {
                 let name = Name(String::from("Xurich's Arcane Full Plate"));
                 let renderable = Renderable {
@@ -142,7 +142,7 @@ pub fn spawn_random_item(
                     },
                 };
                 (name, renderable, item)
-            },            
+            }
             _ => {
                 let name = Name(String::from("Cloak"));
                 let renderable = Renderable {
